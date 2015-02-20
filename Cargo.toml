@@ -1,0 +1,5 @@
+[package]
+
+name = "lc4_sim"
+version = "0.0.1"
+authors = ["John P Mayer <john.p.mayer.jr@gmail.com>"]
