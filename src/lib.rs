@@ -23,18 +23,18 @@ pub mod lc4 {
   #[derive(PartialEq, Eq)]
   pub struct IMM9 { pub value : i16 }
   #[derive(PartialEq, Eq)]
-  pub struct IMM7 { pub value : i8 }
+  pub struct IMM7 { pub value : i16 }
   #[derive(PartialEq, Eq)]
-  pub struct IMM6 { pub value : i8 }
+  pub struct IMM6 { pub value : i16 }
   #[derive(PartialEq, Eq)]
-  pub struct IMM5 { pub value : i8 }
+  pub struct IMM5 { pub value : i16 }
 
   #[derive(PartialEq, Eq)]
-  pub struct UIMM8 { pub value : u8 }
+  pub struct UIMM8 { pub value : u16 }
   #[derive(PartialEq, Eq)]
-  pub struct UIMM7 { pub value : u8 }
+  pub struct UIMM7 { pub value : u16 }
   #[derive(PartialEq, Eq)]
-  pub struct UIMM4 { pub value : u8 }
+  pub struct UIMM4 { pub value : u16 }
 
   // Instructions
 
@@ -97,33 +97,86 @@ pub mod controller {
   use lc4::*;
 
   #[derive(PartialEq, Eq)]
-  enum DecodeError { BadOpcode }
+  enum DecodeError { Exhaustive, BadOpcode }
 
   trait Controller {
-    fn decode(&self) -> Result<Inst, DecodeError>;
+    fn decode(self) -> Result<Inst, DecodeError>;
   }
     
   macro_rules! opcode {
-    ( $inst:expr ) => { ($inst & 0xF000 ) >> 12 };
+    ( $inst:expr ) => { ($inst >> 12 ) & 0xF };
   }
   
   macro_rules! br_opcode {
-    ( $inst:expr ) => { ($inst & 0x0E00 ) >> 9 };
+    ( $inst:expr ) => { ($inst >> 9 ) & 0x7 };
   }
   
-  macro_rules! decode_imm9 {
-    ( $inst:expr ) => { IMM9{value : if $inst & 0x0100 == 0 { $inst & 0x01FF } else { ($inst & 0x01FF) | 0xFE00  } as i16} };
+  macro_rules! arith_opcode {
+    ( $inst:expr ) => { ($inst >> 3 ) & 0x7 };
   }
+  
+  macro_rules! cmp_opcode {
+    ( $inst:expr ) => { ($inst >> 7 ) & 0x3 };
+  }
+  
+  macro_rules! rd {
+    ( $inst:expr ) => { (($inst >> 9 ) & 0x7) as RName };
+  }
+  
+  macro_rules! rs {
+    ( $inst:expr ) => { (($inst >> 6 ) & 0x7) as RName };
+  }
+  
+  macro_rules! rt {
+    ( $inst:expr ) => { (($inst >> 0 ) & 0x7) as RName };
+  }
+  
+  macro_rules! imm9 {
+    ( $inst:expr ) => { IMM9{value : (($inst as i16) << 7) >> 7} };
+  }
+  
+  macro_rules! imm7 {
+    ( $inst:expr ) => { IMM7{value : (($inst as i16) << 9) >> 9} };
+  }
+  
+  macro_rules! imm5 {
+    ( $inst:expr ) => { IMM5{value : (($inst as i16) << 11) >> 11} };
+  }
+  
+  macro_rules! uimm7 {
+    ( $inst:expr ) => { UIMM7{value : (($inst as u16) << 9) >> 9} };
+  }  
   
   impl Controller for u16 {
-    fn decode(&self) -> Result<Inst, DecodeError> {
+    fn decode(self) -> Result<Inst, DecodeError> {
       match opcode!(self) {
+        
         0b0000 => 
           match br_opcode!(self) {
-            0b000 => Ok(Inst::NOP),
-            a => Ok(Inst::BR(a as CC, decode_imm9!(self)))
+            0b000 => Ok(Inst::NOP                      ),
+            a     => Ok(Inst::BR (a as CC, imm9!(self)))
           },
+        
+        0b0001 =>
+          match arith_opcode!(self) {
+            0b000 => Ok(Inst::ADD  (rd!(self), rs!(self),   rt!(self))),
+            0b001 => Ok(Inst::MUL  (rd!(self), rs!(self),   rt!(self))),
+            0b010 => Ok(Inst::SUB  (rd!(self), rs!(self),   rt!(self))),
+            0b011 => Ok(Inst::DIV  (rd!(self), rs!(self),   rt!(self))),
+            _     => Ok(Inst::ADDi (rd!(self), rs!(self), imm5!(self)))
+          },
+        
+        0b0010 =>
+          match cmp_opcode!(self) {
+            0b00 => Ok(Inst::CMP   (rd!(self),    rt!(self))),
+            0b01 => Ok(Inst::CMPu  (rd!(self),    rt!(self))),
+            0b10 => Ok(Inst::CMPi  (rd!(self),  imm7!(self))),
+            0b11 => Ok(Inst::CMPiu (rd!(self), uimm7!(self))),
+            _    => Err(DecodeError::Exhaustive)
+          },
+        
         _ => Err(DecodeError::BadOpcode)
+        
       }
     }
   }
@@ -136,7 +189,10 @@ pub mod controller {
     assert!(0b0000100000010110.decode() == Ok(Inst::BR(N    , IMM9{value:  22})));
     assert!(0b0000101111101110.decode() == Ok(Inst::BR(N | P, IMM9{value: -18})));
     
+    assert!(0b0001010001010100.decode() == Ok(Inst::SUB(R2, R1, R4)));
     
+    assert!(0b0010011101101001.decode() == Ok(Inst::CMPi(R3, IMM7{value: -23})));
+    assert!(0b0010011111101001.decode() == Ok(Inst::CMPiu(R3, UIMM7{value: 105})));
   }
 }
 
