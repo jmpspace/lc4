@@ -1,5 +1,7 @@
 
 #![feature(core)]
+#![feature(plugin)]
+#![plugin(peg_syntax_ext)]
 
 extern crate core;
 
@@ -26,6 +28,8 @@ pub mod lc4 {
     pub const R7 : RName = 7;
 
     #[derive(PartialEq, Eq)]
+    pub struct IMM16 { pub value : i16 }
+    #[derive(PartialEq, Eq)]
     pub struct IMM11 { pub value : i16 }
     #[derive(PartialEq, Eq)]
     pub struct IMM9 { pub value : i16 }
@@ -36,6 +40,8 @@ pub mod lc4 {
     #[derive(PartialEq, Eq)]
     pub struct IMM5 { pub value : i16 }
 
+    #[derive(PartialEq, Eq)]
+    pub struct UIMM16 { pub value : i16 }
     #[derive(PartialEq, Eq)]
     pub struct UIMM8 { pub value : u16 }
     #[derive(PartialEq, Eq)]
@@ -78,29 +84,32 @@ pub mod lc4 {
       HICONST(RName, UIMM8),
       TRAP(UIMM8)
     }
-    
-    // PSEUDO-insnructions
-
-    pub const RET : Insn = Insn::JMPr(R7);
-    // LEA(RName, LABEL)
-    // LC(RName, LABEL)
-
-    // Assembly Directives
-    /*
-    .DATA
-    .CODE
-    .ADDR UIMM16
-    .FALIGN
-    .FILL IMM16
-    .BLKW UIMM16
-    .CONST IMM16
-    .UCONST UIMM16
-    */
-    
+        
   }
   
   pub mod assembler {
-  
+    
+    use lc4::architecture::*;
+    
+    type Label = String;
+    
+    enum Assembly { 
+      Insn(Insn),
+      RET,
+      LEA(RName, Label),
+      LC(RName, Label),
+      DATA,
+      CODE,
+      ADDR(UIMM16),
+      FALIGN,
+      FILL(IMM16),
+      BLK(UIMM16),
+      CONST(Label, IMM16),
+      UCONST(Label, UIMM16)
+    }    
+    
+    peg_file! modname("lc4_assembly.rustpeg");
+    
   }
   
   pub mod controller {
@@ -330,18 +339,30 @@ pub mod lc4 {
         match insn {
           Insn::NOP => {},
           
-          Insn::BR(cc, offset) => if cc & self.nzp != 0 { self.pc += offset.value as u16 },
+          Insn::BR(cc, offset) => 
+            if cc & self.nzp != 0 { 
+              self.pc += offset.value as u16 
+            },
           
-          Insn::ADD(rd, rs, rt) => self.regfile[rd] = self.regfile[rs] + self.regfile[rt],
-          Insn::MUL(rd, rs, rt) => self.regfile[rd] = self.regfile[rs] * self.regfile[rt],
-          Insn::SUB(rd, rs, rt) => self.regfile[rd] = self.regfile[rs] - self.regfile[rt],
-          Insn::DIV(rd, rs, rt) => self.regfile[rd] = self.regfile[rs] / self.regfile[rt],
-          Insn::ADDi(rd, rs, n) => self.regfile[rd] = self.regfile[rs] + n.value,
+          Insn::ADD(rd, rs, rt) => 
+            self.regfile[rd] = self.regfile[rs] + self.regfile[rt],
+          Insn::MUL(rd, rs, rt) => 
+            self.regfile[rd] = self.regfile[rs] * self.regfile[rt],
+          Insn::SUB(rd, rs, rt) => 
+            self.regfile[rd] = self.regfile[rs] - self.regfile[rt],
+          Insn::DIV(rd, rs, rt) => 
+            self.regfile[rd] = self.regfile[rs] / self.regfile[rt],
+          Insn::ADDi(rd, rs, n) => 
+            self.regfile[rd] = self.regfile[rs] + n.value,
           
-          Insn::CMP(rd, rt) => self.nzp = from_ordering(self.regfile[rd].cmp(&self.regfile[rt])),
-          Insn::CMPu(rd, rt) => self.nzp = from_ordering((self.regfile[rd] as u16).cmp(&(self.regfile[rt] as u16))),
-          Insn::CMPi(rd, test) => self.nzp = from_ordering(self.regfile[rd].cmp(&test.value)),
-          Insn::CMPiu(rd, test) => self.nzp = from_ordering((self.regfile[rd] as u16).cmp(&test.value)),
+          Insn::CMP(rd, rt) => 
+            self.nzp = from_ordering(self.regfile[rd].cmp(&self.regfile[rt])),
+          Insn::CMPu(rd, rt) => 
+            self.nzp = from_ordering((self.regfile[rd] as u16).cmp(&(self.regfile[rt] as u16))),
+          Insn::CMPi(rd, test) => 
+            self.nzp = from_ordering(self.regfile[rd].cmp(&test.value)),
+          Insn::CMPiu(rd, test) => 
+            self.nzp = from_ordering((self.regfile[rd] as u16).cmp(&test.value)),
           
           Insn::JSR(target) => { 
             pc_incr = false; 
@@ -354,20 +375,29 @@ pub mod lc4 {
             self.pc = self.regfile[rs] as u16
           }
           
-          Insn::AND(rd, rs, rt) => self.regfile[rd] = self.regfile[rs] & self.regfile[rt],
-          Insn::NOT(rd, rs)     => self.regfile[rd] = !self.regfile[rs],
-          Insn::OR (rd, rs, rt) => self.regfile[rd] = self.regfile[rs] | self.regfile[rt],
-          Insn::XOR(rd, rs, rt) => self.regfile[rd] = self.regfile[rs] ^ self.regfile[rt],
-          Insn::ANDi(rd, rs, n) => self.regfile[rd] = self.regfile[rs] & (n.value as i16),
+          Insn::AND(rd, rs, rt) => 
+            self.regfile[rd] = self.regfile[rs] & self.regfile[rt],
+          Insn::NOT(rd, rs)     => 
+            self.regfile[rd] = !self.regfile[rs],
+          Insn::OR (rd, rs, rt) => 
+            self.regfile[rd] = self.regfile[rs] | self.regfile[rt],
+          Insn::XOR(rd, rs, rt) => 
+            self.regfile[rd] = self.regfile[rs] ^ self.regfile[rt],
+          Insn::ANDi(rd, rs, n) => 
+            self.regfile[rd] = self.regfile[rs] & (n.value as i16),
           
           Insn::LDR(rd, rs, offset) => {
             let addr = (self.regfile[rs] as i16 + offset.value) as usize;
-            if !self.priv_status && addr >= 0x8000 { return Err(CPUError::Unauthorized) };
+            if !self.priv_status && addr >= 0x8000 { 
+              return Err(CPUError::Unauthorized) 
+            };
             self.regfile[rd] = self.memory[addr]
           },
           Insn::STR(rd, rs, offset) =>  {
             let addr = (self.regfile[rs] as i16 + offset.value) as usize;
-            if !self.priv_status && addr >= 0x8000 { return Err(CPUError::Unauthorized) };
+            if !self.priv_status && addr >= 0x8000 { 
+              return Err(CPUError::Unauthorized) 
+            };
             self.memory[addr] = self.regfile[rd]
           },
           
@@ -379,10 +409,14 @@ pub mod lc4 {
           
           Insn::CONST(rd, c) => self.regfile[rd] = c.value,
           
-          Insn::SLL(rd, rs, amount) => self.regfile[rd] = self.regfile[rs] << amount.value,
-          Insn::SRA(rd, rs, amount) => self.regfile[rd] = ((self.regfile[rs] as u16) >> amount.value) as i16,
-          Insn::SRL(rd, rs, amount) => self.regfile[rd] = self.regfile[rs] >> amount.value,
-          Insn::MOD(rd, rs, rt) => self.regfile[rd] = self.regfile[rs] % self.regfile[rt],
+          Insn::SLL(rd, rs, amount) => 
+            self.regfile[rd] = self.regfile[rs] << amount.value,
+          Insn::SRA(rd, rs, amount) => 
+            self.regfile[rd] = ((self.regfile[rs] as u16) >> amount.value) as i16,
+          Insn::SRL(rd, rs, amount) => 
+            self.regfile[rd] = self.regfile[rs] >> amount.value,
+          Insn::MOD(rd, rs, rt) => 
+            self.regfile[rd] = self.regfile[rs] % self.regfile[rt],
           
           Insn::JMPr(rs) => {
             pc_incr = false;
@@ -390,7 +424,8 @@ pub mod lc4 {
           },
           Insn::JMP(target) => self.pc = ((self.pc as i16) + target.value) as u16,
           
-          Insn::HICONST(rd, c) => self.regfile[rd] = (self.regfile[rd] & 0xFF) | ((c.value << 8) as i16),
+          Insn::HICONST(rd, c) => 
+            self.regfile[rd] = (self.regfile[rd] & 0xFF) | ((c.value << 8) as i16),
           
           Insn::TRAP(target) => {
             pc_incr = false;
