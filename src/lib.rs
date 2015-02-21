@@ -97,7 +97,7 @@ pub mod controller {
   use lc4::*;
 
   #[derive(PartialEq, Eq)]
-  enum DecodeError { Exhaustive, BadOpcode }
+  enum DecodeError { BadOpcode }
 
   trait Controller {
     fn decode(self) -> Result<Inst, DecodeError>;
@@ -119,6 +119,14 @@ pub mod controller {
     ( $inst:expr ) => { ($inst >> 7 ) & 0x3 };
   }
   
+  macro_rules! shift_opcode {
+    ( $inst:expr ) => { ($inst >> 4 ) & 0x3 };
+  }  
+  
+  macro_rules! jump_opcode {
+    ( $inst:expr ) => { ($inst >> 11 ) & 0x1 };
+  }  
+  
   macro_rules! rd {
     ( $inst:expr ) => { (($inst >> 9 ) & 0x7) as RName };
   }
@@ -130,6 +138,10 @@ pub mod controller {
   macro_rules! rt {
     ( $inst:expr ) => { (($inst >> 0 ) & 0x7) as RName };
   }
+
+  macro_rules! imm11 {
+    ( $inst:expr ) => { IMM11{value : (($inst as i16) << 5) >> 5} };
+  }
   
   macro_rules! imm9 {
     ( $inst:expr ) => { IMM9{value : (($inst as i16) << 7) >> 7} };
@@ -138,25 +150,39 @@ pub mod controller {
   macro_rules! imm7 {
     ( $inst:expr ) => { IMM7{value : (($inst as i16) << 9) >> 9} };
   }
+
+  macro_rules! imm6 {
+    ( $inst:expr ) => { IMM6{value : (($inst as i16) << 10) >> 10} };
+  }
   
   macro_rules! imm5 {
     ( $inst:expr ) => { IMM5{value : (($inst as i16) << 11) >> 11} };
   }
   
+  macro_rules! uimm8 {
+    ( $inst:expr ) => { UIMM8{value : (($inst as u16) << 8) >> 8} };
+  }  
+  
   macro_rules! uimm7 {
     ( $inst:expr ) => { UIMM7{value : (($inst as u16) << 9) >> 9} };
+  }    
+
+  macro_rules! uimm4 {
+    ( $inst:expr ) => { UIMM4{value : (($inst as u16) << 12) >> 12} };
   }  
   
   impl Controller for u16 {
     fn decode(self) -> Result<Inst, DecodeError> {
       match opcode!(self) {
         
+        // Branching
         0b0000 => 
           match br_opcode!(self) {
             0b000 => Ok(Inst::NOP                      ),
             a     => Ok(Inst::BR (a as CC, imm9!(self)))
           },
         
+        // Numeric Arithmetic
         0b0001 =>
           match arith_opcode!(self) {
             0b000 => Ok(Inst::ADD  (rd!(self), rs!(self),   rt!(self))),
@@ -166,14 +192,63 @@ pub mod controller {
             _     => Ok(Inst::ADDi (rd!(self), rs!(self), imm5!(self)))
           },
         
+        // Comparison
         0b0010 =>
           match cmp_opcode!(self) {
             0b00 => Ok(Inst::CMP   (rd!(self),    rt!(self))),
             0b01 => Ok(Inst::CMPu  (rd!(self),    rt!(self))),
             0b10 => Ok(Inst::CMPi  (rd!(self),  imm7!(self))),
-            0b11 => Ok(Inst::CMPiu (rd!(self), uimm7!(self))),
-            _    => Err(DecodeError::Exhaustive)
+            _    => Ok(Inst::CMPiu (rd!(self), uimm7!(self))),
           },
+        
+        // Jump Subroutine
+        0b0100 =>
+          match jump_opcode!(self) {
+            0b0 => Ok(Inst::JSRr (rs!(self))),
+            _   => Ok(Inst::JSR  (imm11!(self)))
+          },
+        
+        // Bitwise Arithmetic
+        0b0101 =>
+          match arith_opcode!(self) {
+            0b000 => Ok(Inst::AND  (rd!(self), rs!(self),   rt!(self))),
+            0b001 => Ok(Inst::NOT  (rd!(self), rs!(self)             )),
+            0b010 => Ok(Inst::OR   (rd!(self), rs!(self),   rt!(self))),
+            0b011 => Ok(Inst::XOR  (rd!(self), rs!(self),   rt!(self))),
+            _     => Ok(Inst::ANDi (rd!(self), rs!(self), imm5!(self)))
+          },
+        
+        // Memory Access
+        0b0110 => Ok(Inst::LDR (rd!(self), rs!(self), imm6!(self))),
+        0b0111 => Ok(Inst::STR (rd!(self), rs!(self), imm6!(self))),
+        
+        // Function Return (C Semantics)
+        0b1000 => Ok(Inst::RTI),
+        
+        // Constant Assignment
+        0b1001 => Ok(Inst::CONST (rd!(self), imm9!(self))),
+        
+        // Shift
+        0b1010 => 
+          match shift_opcode!(self) {
+            0b00 => Ok(Inst::SLL (rd!(self), rs!(self), uimm4!(self))),
+            0b01 => Ok(Inst::SRA (rd!(self), rs!(self), uimm4!(self))),
+            0b10 => Ok(Inst::SRL (rd!(self), rs!(self), uimm4!(self))),
+            _    => Ok(Inst::MOD (rd!(self), rs!(self),    rt!(self)))
+          },
+        
+        // Jump
+        0b1100 =>
+          match jump_opcode!(self) {
+            0b0 => Ok(Inst::JMPr (rs!(self))),
+            _   => Ok(Inst::JMP  (imm11!(self)))
+          },
+        
+        // Constant Assignment
+        0b1101 => Ok(Inst::HICONST (rd!(self), uimm8!(self))),
+        
+        // Trap (Jump to privileged subroutine)
+        0b1111 => Ok(Inst::TRAP (uimm8!(self))),
         
         _ => Err(DecodeError::BadOpcode)
         
@@ -193,6 +268,11 @@ pub mod controller {
     
     assert!(0b0010011101101001.decode() == Ok(Inst::CMPi(R3, IMM7{value: -23})));
     assert!(0b0010011111101001.decode() == Ok(Inst::CMPiu(R3, UIMM7{value: 105})));
+    
+    assert!(0b0100101001101001.decode() == Ok(Inst::JSR(IMM11{value: 617})));
+    assert!(0b0100001001101001.decode() == Ok(Inst::JSRr(R1)));
+    
+    assert!(0b0101010001010100.decode() == Ok(Inst::OR(R2, R1, R4)));
   }
 }
 
