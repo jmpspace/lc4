@@ -5,7 +5,7 @@ extern crate core;
 
 pub mod lc4 {
 
-  pub mod isa {
+  pub mod architecture {
 
     // ConditionCode
     pub type CC = u8;
@@ -98,10 +98,14 @@ pub mod lc4 {
     */
     
   }
-
+  
+  pub mod assembler {
+  
+  }
+  
   pub mod controller {
     
-    use lc4::isa::*;
+    use lc4::architecture::*;
 
     #[derive(PartialEq, Eq)]
     pub enum DecodeError { BadOpcode }
@@ -283,9 +287,9 @@ pub mod lc4 {
     }
   }
 
-  pub mod cpu {
+  pub mod processor {
     
-    use lc4::isa::*;
+    use lc4::architecture::*;
     use lc4::controller::*;
     use core::error::FromError;
     use std::cmp::Ordering;
