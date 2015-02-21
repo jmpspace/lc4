@@ -19,22 +19,22 @@ pub mod lc4 {
   pub const R7 : RName = 7;
 
   #[derive(PartialEq, Eq)]
-  pub struct IMM11 { pub val : i16 }
+  pub struct IMM11 { pub value : i16 }
   #[derive(PartialEq, Eq)]
-  pub struct IMM9 { pub val : i16 }
+  pub struct IMM9 { pub value : i16 }
   #[derive(PartialEq, Eq)]
-  pub struct IMM7 { pub val : i8 }
+  pub struct IMM7 { pub value : i8 }
   #[derive(PartialEq, Eq)]
-  pub struct IMM6 { pub val : i8 }
+  pub struct IMM6 { pub value : i8 }
   #[derive(PartialEq, Eq)]
-  pub struct IMM5 { pub val : i8 }
+  pub struct IMM5 { pub value : i8 }
 
   #[derive(PartialEq, Eq)]
-  pub struct UIMM8 { pub val : u8 }
+  pub struct UIMM8 { pub value : u8 }
   #[derive(PartialEq, Eq)]
-  pub struct UIMM7 { pub val : u8 }
+  pub struct UIMM7 { pub value : u8 }
   #[derive(PartialEq, Eq)]
-  pub struct UIMM4 { pub val : u8 }
+  pub struct UIMM4 { pub value : u8 }
 
   // Instructions
 
@@ -112,7 +112,7 @@ pub mod controller {
   }
   
   macro_rules! decode_imm9 {
-    ( $inst:expr ) => { IMM9{val : if $inst & 0x0100 == 0 { $inst & 0x01FF } else { ($inst & 0x01FF) | 0xFE00  } as i16} };
+    ( $inst:expr ) => { IMM9{value : if $inst & 0x0100 == 0 { $inst & 0x01FF } else { ($inst & 0x01FF) | 0xFE00  } as i16} };
   }
   
   impl Controller for u16 {
@@ -130,7 +130,13 @@ pub mod controller {
   
   #[test]
   fn decode_unit_tests () {
-    assert!((0x0000 as u16).decode() == Ok(Inst::NOP));
+    assert!(0.decode() == Ok(Inst::NOP));
+    
+    assert!(0b0000011000000110.decode() == Ok(Inst::BR(Z | P, IMM9{value:   6})));
+    assert!(0b0000100000010110.decode() == Ok(Inst::BR(N    , IMM9{value:  22})));
+    assert!(0b0000101111101110.decode() == Ok(Inst::BR(N | P, IMM9{value: -18})));
+    
+    
   }
 }
 
