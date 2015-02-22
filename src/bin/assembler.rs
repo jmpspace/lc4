@@ -17,13 +17,7 @@ pub fn main() -> () {
 
   println!("Using source file '{}'", source_file);
 
-  let assms: Vec<Assm> = 
-    open_assembly_file(source_file)
-      .unwrap()
-      .map(|a| a.unwrap())
-      .collect();
+  let assms = read_assembly_file(source_file);
 
   println!("{:?}", assms);
-
-  println!("Go")
 }

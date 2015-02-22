@@ -61,28 +61,19 @@ pub enum Assm {
 
 peg_file! lc4_grammar("grammar/lc4.pegjs");
 
-pub struct AssemblyFile {
-  reader: BufferedReader<File>
-}
-
-pub fn open_assembly_file(filename: &str) -> Result<AssemblyFile, IoError> {
-  let file = try!(File::open(&Path::new(filename)));
-  let reader = BufferedReader::new(file);
-  Ok(AssemblyFile{reader: reader})
-}
-
-impl Iterator for AssemblyFile {
-  type Item = Result<Assm, AssmError>;
-  fn next(&mut self) -> Option<Result<Assm, AssmError>> {
-    match self.reader.lines().next() {
-      None => None,
-      Some(Err(err)) => Some(Err(AssmError::IoError(err))),
-      Some(Ok(line)) => {
-        match lc4_grammar::assm(&line.trim()[..]) {
-          Err(err) => Some(Err(AssmError::ParseError(err))),
-          Ok(assm) => Some(Ok(assm))
-        }
-      }
-    }
+fn read_assembly_line(line: String) -> Result<Assm, AssmError> {
+  match lc4_grammar::assm(&line.trim()[..]) {
+    Err(err) => Err(AssmError::ParseError(err)),
+    Ok(assm) => Ok(assm)
   }
+}
+
+pub fn read_assembly_file(filename: &str) -> Result<Vec<Assm>, AssmError> {
+  let file = try!(File::open(&Path::new(filename)));
+  let mut reader = BufferedReader::new(file);
+  let mut assms = Vec::new();
+  for line in reader.lines() {
+    assms.push(try!(read_assembly_line(try!(line))))
+  }
+  Ok(assms)
 }
