@@ -3,17 +3,17 @@ use architecture::*;
 use assembler::*;
 
 imm16 -> IMM16
-  = [-] [1-9] [0-9]* { IMM16{value: match_str.parse().unwrap()} }
+  = [-]? [1-9] [0-9]* { IMM16{value: match_str.parse().unwrap()} }
 imm11 -> IMM11
-  = [-] [1-9] [0-9]* { IMM11{value: match_str.parse().unwrap()} }
+  = [-]? [1-9] [0-9]* { IMM11{value: match_str.parse().unwrap()} }
 imm9  -> IMM9
-  = [-] [1-9] [0-9]* { IMM9 {value: match_str.parse().unwrap()} }
+  = [-]? [1-9] [0-9]* { IMM9 {value: match_str.parse().unwrap()} }
 imm7  -> IMM7
-  = [-] [1-9] [0-9]* { IMM7 {value: match_str.parse().unwrap()} }
+  = [-]? [1-9] [0-9]* { IMM7 {value: match_str.parse().unwrap()} }
 imm6  -> IMM6
-  = [-] [1-9] [0-9]* { IMM6 {value: match_str.parse().unwrap()} }
+  = [-]? [1-9] [0-9]* { IMM6 {value: match_str.parse().unwrap()} }
 imm5  -> IMM5
-  = [-] [1-9] [0-9]* { IMM5 {value: match_str.parse().unwrap()} }
+  = [-]? [1-9] [0-9]* { IMM5 {value: match_str.parse().unwrap()} }
 
 uimm16 -> UIMM16
   = [1-9] [0-9]* { UIMM16{value: match_str.parse().unwrap()} }
@@ -40,9 +40,11 @@ string -> String
   
 ws -> ()
   = " "+
-  
-// Instructions
 
+csws -> ()
+  = "," ws
+  
+#[pub]
 assm -> Assm
   = "NOP" { Assm::NOP }
   / "BRp" ws l:label { Assm::BR(P, l) }
@@ -52,37 +54,37 @@ assm -> Assm
   / "BRp" ws l:label { Assm::BR(N|P, l) }
   / "BRp" ws l:label { Assm::BR(N|Z, l) }
   / "BRp" ws l:label { Assm::BR(N|Z|P, l) }
-  / "ADD" ws d:r_name ws s:r_name ws t:r_name { Assm::ADD(d,s,t) }
-  / "MUL" ws d:r_name ws s:r_name ws t:r_name { Assm::MUL(d,s,t) }
-  / "SUB" ws d:r_name ws s:r_name ws t:r_name { Assm::SUB(d,s,t) }
-  / "DIV" ws d:r_name ws s:r_name ws t:r_name { Assm::DIV(d,s,t) }
-  / "ADD" ws d:r_name ws s:r_name ws i:imm5   { Assm::ADDi(d,s,i) }
-  / "CMP"   ws d:r_name ws t:r_name { Assm::CMP(d,t) }
-  / "CMPU"  ws d:r_name ws t:r_name { Assm::CMPu(d,t) }
-  / "CMPI"  ws d:r_name ws i:imm7   { Assm::CMPi(d,i) }
-  / "CMPIU" ws d:r_name ws u:uimm7  { Assm::CMPiu(d,u) }
+  / "ADD" ws d:r_name csws s:r_name csws t:r_name { Assm::ADD(d,s,t) }
+  / "MUL" ws d:r_name csws s:r_name csws t:r_name { Assm::MUL(d,s,t) }
+  / "SUB" ws d:r_name csws s:r_name csws t:r_name { Assm::SUB(d,s,t) }
+  / "DIV" ws d:r_name csws s:r_name csws t:r_name { Assm::DIV(d,s,t) }
+  / "ADD" ws d:r_name csws s:r_name csws i:imm5   { Assm::ADDi(d,s,i) }
+  / "CMP"   ws d:r_name csws t:r_name { Assm::CMP(d,t) }
+  / "CMPU"  ws d:r_name csws t:r_name { Assm::CMPu(d,t) }
+  / "CMPI"  ws d:r_name csws i:imm7   { Assm::CMPi(d,i) }
+  / "CMPIU" ws d:r_name csws u:uimm7  { Assm::CMPiu(d,u) }
   / "JSRR" ws s:r_name { Assm::JSRr(s) }
   / "JSR"  ws l:label  { Assm::JSR(l) }
-  / "AND" ws d:r_name ws s:r_name ws t:r_name { Assm::AND(d,s,t) }
-  / "NOT" ws d:r_name ws s:r_name             { Assm::NOT(d,s) }
-  / "OR"  ws d:r_name ws s:r_name ws t:r_name { Assm::OR(d,s,t) }
-  / "XOR" ws d:r_name ws s:r_name ws t:r_name { Assm::XOR(d,s,t) }
-  / "AND" ws d:r_name ws s:r_name ws i:imm5   { Assm::ANDi(d,s,i) }
-  / "LDR" ws d:r_name ws s:r_name ws i:imm6 { Assm::LDR(d,s,i) }
-  / "STR" ws d:r_name ws s:r_name ws i:imm6 { Assm::STR(d,s,i) }
+  / "AND" ws d:r_name csws s:r_name csws t:r_name { Assm::AND(d,s,t) }
+  / "NOT" ws d:r_name csws s:r_name             { Assm::NOT(d,s) }
+  / "OR"  ws d:r_name csws s:r_name csws t:r_name { Assm::OR(d,s,t) }
+  / "XOR" ws d:r_name csws s:r_name csws t:r_name { Assm::XOR(d,s,t) }
+  / "AND" ws d:r_name csws s:r_name csws i:imm5   { Assm::ANDi(d,s,i) }
+  / "LDR" ws d:r_name csws s:r_name csws i:imm6 { Assm::LDR(d,s,i) }
+  / "STR" ws d:r_name csws s:r_name csws i:imm6 { Assm::STR(d,s,i) }
   / "RTI" { Assm::RTI }
-  / "CONST" ws d:r_name ws i:imm9 { Assm::CONST(d,i) }
-  / "SLL" ws d:r_name ws s:r_name ws u:uimm4 { Assm::SLL(d,s,u) }
-  / "SRA" ws d:r_name ws s:r_name ws u:uimm4 { Assm::SRA(d,s,u) }
-  / "SRL" ws d:r_name ws s:r_name ws u:uimm4 { Assm::SRL(d,s,u) }
-  / "MOD" ws d:r_name ws s:r_name ws t:r_name { Assm::MOD(d,s,t) }
+  / "CONST" ws d:r_name csws i:imm9 { Assm::CONST(d,i) }
+  / "SLL" ws d:r_name csws s:r_name csws u:uimm4 { Assm::SLL(d,s,u) }
+  / "SRA" ws d:r_name csws s:r_name csws u:uimm4 { Assm::SRA(d,s,u) }
+  / "SRL" ws d:r_name csws s:r_name csws u:uimm4 { Assm::SRL(d,s,u) }
+  / "MOD" ws d:r_name csws s:r_name csws t:r_name { Assm::MOD(d,s,t) }
   / "JMPR" ws s:r_name { Assm::JMPr(s) }
   / "JMP" ws l:label { Assm::JMP(l) }
-  / "HICONST" ws d:r_name ws u:uimm8 { Assm::HICONST(d,u) }
+  / "HICONST" ws d:r_name csws u:uimm8 { Assm::HICONST(d,u) }
   / "TRAP" ws u:uimm8 { Assm::TRAP(u) }
   / "RET" { Assm::RET }
-  / "LEA" ws d:r_name ws l:label { Assm::LEA(d,l) }
-  / "LC"  ws d:r_name ws l:label { Assm::LC(d,l) }
+  / "LEA" ws d:r_name csws l:label { Assm::LEA(d,l) }
+  / "LC"  ws d:r_name csws l:label { Assm::LC(d,l) }
   / ".CODE" { Assm::CODE }
   / ".DATA" { Assm::DATA }
   / ".ADDR" ws u:uimm16 { Assm::ADDR(u) }
@@ -90,5 +92,5 @@ assm -> Assm
   / ".FILL" ws i:imm16 { Assm::FILL(i) }
   / ".STRINGZ" ws s:string { Assm::STRINGZ(s) }
   / ".BLKW" ws u:uimm16 { Assm::BLKW(u) }
-  / l:label ws ".CONST" ws i:imm16 { Assm::LCONST(l,i) }
-  / l:label ws ".UCONST" ws u:uimm16 { Assm::LUCONST(l,u) }
+  / l:label ws ".CONST" csws i:imm16 { Assm::LCONST(l,i) }
+  / l:label ws ".UCONST" csws u:uimm16 { Assm::LUCONST(l,u) }

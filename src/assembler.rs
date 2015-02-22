@@ -1,8 +1,9 @@
 use core::error::FromError;
 use architecture::*;
-use std::old_io::*;
+use std::old_io::{BufferedReader, File, IoError};
 
-pub enum AssmError { IoError(IoError), NotImplemented }
+#[derive(Debug)]
+pub enum AssmError { IoError(IoError), ParseError(String) }
 
 impl FromError<IoError> for AssmError {
   fn from_error(err: IoError) -> AssmError {
@@ -12,6 +13,7 @@ impl FromError<IoError> for AssmError {
 
 pub type Label = String;
 
+#[derive(Debug)]
 pub enum Assm { 
   NOP,
   BR(CC, Label),
@@ -57,11 +59,30 @@ pub enum Assm {
   LUCONST(Label, UIMM16)
 }    
 
-peg_file! modname("lc4_assembly.rustpeg");
+peg_file! lc4_grammar("lc4_assembly.rustpeg");
 
-fn parse_file(filename: &str) -> Result<Vec<Assm>, AssmError> {
-  let path = Path::new(filename);
-  let mut file = try!(File::open(&path));
-  Err(AssmError::NotImplemented)
+pub struct AssemblyFile {
+  reader: BufferedReader<File>
+}
 
+pub fn open_assembly_file(filename: &str) -> Result<AssemblyFile, IoError> {
+  let file = try!(File::open(&Path::new(filename)));
+  let reader = BufferedReader::new(file);
+  Ok(AssemblyFile{reader: reader})
+}
+
+impl Iterator for AssemblyFile {
+  type Item = Result<Assm, AssmError>;
+  fn next(&mut self) -> Option<Result<Assm, AssmError>> {
+    match self.reader.lines().next() {
+      None => None,
+      Some(Err(err)) => Some(Err(AssmError::IoError(err))),
+      Some(Ok(line)) => {
+        match lc4_grammar::assm(&line.trim()[..]) {
+          Err(err) => Some(Err(AssmError::ParseError(err))),
+          Ok(assm) => Some(Ok(assm))
+        }
+      }
+    }
+  }
 }

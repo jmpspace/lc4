@@ -15,31 +15,31 @@ pub const R5 : RName = 5;
 pub const R6 : RName = 6;
 pub const R7 : RName = 7;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct IMM16 { pub value : i16 }
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct IMM11 { pub value : i16 }
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct IMM9 { pub value : i16 }
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct IMM7 { pub value : i16 }
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct IMM6 { pub value : i16 }
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct IMM5 { pub value : i16 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct UIMM16 { pub value : i16 }
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct UIMM8 { pub value : u16 }
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct UIMM7 { pub value : u16 }
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct UIMM4 { pub value : u16 }
 
 // Insnructions
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum Insn {
   NOP,
   BR(CC, IMM9),

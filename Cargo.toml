@@ -4,5 +4,13 @@ name = "lc4"
 version = "0.0.1"
 authors = ["John P Mayer <john.p.mayer.jr@gmail.com>"]
 
+[lib]
+name = "lc4"
+path = "src/lib.rs"
+
+[[bin]]
+name = "lc4-assemble"
+path = "src/bin/assembler.rs"
+
 [dependencies]
 peg = "0.1.7"
