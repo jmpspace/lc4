@@ -59,7 +59,7 @@ pub enum Assm {
   LUCONST(Label, UIMM16)
 }    
 
-peg_file! lc4_grammar("lc4_assembly.rustpeg");
+peg_file! lc4_grammar("grammar/lc4.pegjs");
 
 pub struct AssemblyFile {
   reader: BufferedReader<File>
