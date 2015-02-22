@@ -1,6 +1,6 @@
 
-use lc4::architecture::*;
-use lc4::assembler::*;
+use architecture::*;
+use assembler::*;
 
 imm16 -> IMM16
   = [-] [1-9] [0-9]* { IMM16{value: match_str.parse().unwrap()} }
