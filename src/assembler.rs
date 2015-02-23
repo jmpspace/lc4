@@ -49,6 +49,7 @@ pub enum Assm {
   LEA(RName, Label),
   LC(RName, Label),
   DATA,
+  LABEL(Label),
   CODE,
   ADDR(UIMM16),
   FALIGN,

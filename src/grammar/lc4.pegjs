@@ -85,6 +85,7 @@ assm -> Assm
   / "RET" { Assm::RET }
   / "LEA" ws d:r_name csws l:label { Assm::LEA(d,l) }
   / "LC"  ws d:r_name csws l:label { Assm::LC(d,l) }
+  / ".LABEL" ws l:label { Assm::LABEL(l) }
   / ".CODE" { Assm::CODE }
   / ".DATA" { Assm::DATA }
   / ".ADDR" ws u:uimm16 { Assm::ADDR(u) }

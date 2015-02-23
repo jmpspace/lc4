@@ -29,7 +29,7 @@ pub struct IMM6 { pub value : i16 }
 pub struct IMM5 { pub value : i16 }
 
 #[derive(PartialEq, Eq, Debug)]
-pub struct UIMM16 { pub value : i16 }
+pub struct UIMM16 { pub value : u16 }
 #[derive(PartialEq, Eq, Debug)]
 pub struct UIMM8 { pub value : u16 }
 #[derive(PartialEq, Eq, Debug)]
