@@ -82,77 +82,77 @@ impl Controller for u16 {
       // Branching
       0b0000 => 
         match br_opcode!(self) {
-          0b000 => Ok(Insn::NOP                      ),
-          a     => Ok(Insn::BR (a as CC, imm9!(self)))
+          0b000 => Ok(InsnGen::NOP                      ),
+          a     => Ok(InsnGen::BR (a as CC, imm9!(self)))
         },
       
       // Numeric Arithmetic
       0b0001 =>
         match arith_opcode!(self) {
-          0b000 => Ok(Insn::ADD  (rd!(self), rs!(self),   rt!(self))),
-          0b001 => Ok(Insn::MUL  (rd!(self), rs!(self),   rt!(self))),
-          0b010 => Ok(Insn::SUB  (rd!(self), rs!(self),   rt!(self))),
-          0b011 => Ok(Insn::DIV  (rd!(self), rs!(self),   rt!(self))),
-          _     => Ok(Insn::ADDi (rd!(self), rs!(self), imm5!(self)))
+          0b000 => Ok(InsnGen::ADD  (rd!(self), rs!(self),   rt!(self))),
+          0b001 => Ok(InsnGen::MUL  (rd!(self), rs!(self),   rt!(self))),
+          0b010 => Ok(InsnGen::SUB  (rd!(self), rs!(self),   rt!(self))),
+          0b011 => Ok(InsnGen::DIV  (rd!(self), rs!(self),   rt!(self))),
+          _     => Ok(InsnGen::ADDi (rd!(self), rs!(self), imm5!(self)))
         },
       
       // Comparison
       0b0010 =>
         match cmp_opcode!(self) {
-          0b00 => Ok(Insn::CMP   (rd!(self),    rt!(self))),
-          0b01 => Ok(Insn::CMPu  (rd!(self),    rt!(self))),
-          0b10 => Ok(Insn::CMPi  (rd!(self),  imm7!(self))),
-          _    => Ok(Insn::CMPiu (rd!(self), uimm7!(self))),
+          0b00 => Ok(InsnGen::CMP   (rd!(self),    rt!(self))),
+          0b01 => Ok(InsnGen::CMPu  (rd!(self),    rt!(self))),
+          0b10 => Ok(InsnGen::CMPi  (rd!(self),  imm7!(self))),
+          _    => Ok(InsnGen::CMPiu (rd!(self), uimm7!(self))),
         },
       
       // Jump Subroutine
       0b0100 =>
         match jump_opcode!(self) {
-          0b0 => Ok(Insn::JSRr (rs!(self))),
-          _   => Ok(Insn::JSR  (imm11!(self)))
+          0b0 => Ok(InsnGen::JSRr (rs!(self))),
+          _   => Ok(InsnGen::JSR  (imm11!(self)))
         },
       
       // Bitwise Arithmetic
       0b0101 =>
         match arith_opcode!(self) {
-          0b000 => Ok(Insn::AND  (rd!(self), rs!(self),   rt!(self))),
-          0b001 => Ok(Insn::NOT  (rd!(self), rs!(self)             )),
-          0b010 => Ok(Insn::OR   (rd!(self), rs!(self),   rt!(self))),
-          0b011 => Ok(Insn::XOR  (rd!(self), rs!(self),   rt!(self))),
-          _     => Ok(Insn::ANDi (rd!(self), rs!(self), imm5!(self)))
+          0b000 => Ok(InsnGen::AND  (rd!(self), rs!(self),   rt!(self))),
+          0b001 => Ok(InsnGen::NOT  (rd!(self), rs!(self)             )),
+          0b010 => Ok(InsnGen::OR   (rd!(self), rs!(self),   rt!(self))),
+          0b011 => Ok(InsnGen::XOR  (rd!(self), rs!(self),   rt!(self))),
+          _     => Ok(InsnGen::ANDi (rd!(self), rs!(self), imm5!(self)))
         },
       
       // Memory Access
-      0b0110 => Ok(Insn::LDR (rd!(self), rs!(self), imm6!(self))),
-      0b0111 => Ok(Insn::STR (rd!(self), rs!(self), imm6!(self))),
+      0b0110 => Ok(InsnGen::LDR (rd!(self), rs!(self), imm6!(self))),
+      0b0111 => Ok(InsnGen::STR (rd!(self), rs!(self), imm6!(self))),
       
       // Function Return (C Semantics)
-      0b1000 => Ok(Insn::RTI),
+      0b1000 => Ok(InsnGen::RTI),
       
       // Constant Assignment
-      0b1001 => Ok(Insn::CONST (rd!(self), imm9!(self))),
+      0b1001 => Ok(InsnGen::CONST (rd!(self), imm9!(self))),
       
       // Shift
       0b1010 => 
         match shift_opcode!(self) {
-          0b00 => Ok(Insn::SLL (rd!(self), rs!(self), uimm4!(self))),
-          0b01 => Ok(Insn::SRA (rd!(self), rs!(self), uimm4!(self))),
-          0b10 => Ok(Insn::SRL (rd!(self), rs!(self), uimm4!(self))),
-          _    => Ok(Insn::MOD (rd!(self), rs!(self),    rt!(self)))
+          0b00 => Ok(InsnGen::SLL (rd!(self), rs!(self), uimm4!(self))),
+          0b01 => Ok(InsnGen::SRA (rd!(self), rs!(self), uimm4!(self))),
+          0b10 => Ok(InsnGen::SRL (rd!(self), rs!(self), uimm4!(self))),
+          _    => Ok(InsnGen::MOD (rd!(self), rs!(self),    rt!(self)))
         },
       
       // Jump
       0b1100 =>
         match jump_opcode!(self) {
-          0b0 => Ok(Insn::JMPr (rs!(self))),
-          _   => Ok(Insn::JMP  (imm11!(self)))
+          0b0 => Ok(InsnGen::JMPr (rs!(self))),
+          _   => Ok(InsnGen::JMP  (imm11!(self)))
         },
       
       // Constant Assignment
-      0b1101 => Ok(Insn::HICONST (rd!(self), uimm8!(self))),
+      0b1101 => Ok(InsnGen::HICONST (rd!(self), uimm8!(self))),
       
       // Trap (Jump to privileged subroutine)
-      0b1111 => Ok(Insn::TRAP (uimm8!(self))),
+      0b1111 => Ok(InsnGen::TRAP (uimm8!(self))),
       
       _ => Err(DecodeError::BadOpcode)
       
@@ -162,19 +162,19 @@ impl Controller for u16 {
 
 #[test]
 fn decode_unit_tests () {
-  assert!(0.decode() == Ok(Insn::NOP));
+  assert!(0.decode() == Ok(InsnGen::NOP));
   
-  assert!(0b0000011000000110.decode() == Ok(Insn::BR(Z | P, IMM9{value:   6})));
-  assert!(0b0000100000010110.decode() == Ok(Insn::BR(N    , IMM9{value:  22})));
-  assert!(0b0000101111101110.decode() == Ok(Insn::BR(N | P, IMM9{value: -18})));
+  assert!(0b0000011000000110.decode() == Ok(InsnGen::BR(Z | P, IMM9{value:   6})));
+  assert!(0b0000100000010110.decode() == Ok(InsnGen::BR(N    , IMM9{value:  22})));
+  assert!(0b0000101111101110.decode() == Ok(InsnGen::BR(N | P, IMM9{value: -18})));
   
-  assert!(0b0001010001010100.decode() == Ok(Insn::SUB(R2, R1, R4)));
+  assert!(0b0001010001010100.decode() == Ok(InsnGen::SUB(R2, R1, R4)));
   
-  assert!(0b0010011101101001.decode() == Ok(Insn::CMPi(R3, IMM7{value: -23})));
-  assert!(0b0010011111101001.decode() == Ok(Insn::CMPiu(R3, UIMM7{value: 105})));
+  assert!(0b0010011101101001.decode() == Ok(InsnGen::CMPi(R3, IMM7{value: -23})));
+  assert!(0b0010011111101001.decode() == Ok(InsnGen::CMPiu(R3, UIMM7{value: 105})));
   
-  assert!(0b0100101001101001.decode() == Ok(Insn::JSR(IMM11{value: 617})));
-  assert!(0b0100001001101001.decode() == Ok(Insn::JSRr(R1)));
+  assert!(0b0100101001101001.decode() == Ok(InsnGen::JSR(IMM11{value: 617})));
+  assert!(0b0100001001101001.decode() == Ok(InsnGen::JSRr(R1)));
   
-  assert!(0b0101010001010100.decode() == Ok(Insn::OR(R2, R1, R4)));
+  assert!(0b0101010001010100.decode() == Ok(InsnGen::OR(R2, R1, R4)));
 }

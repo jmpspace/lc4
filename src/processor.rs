@@ -8,7 +8,7 @@ pub struct CPU {
   pub priv_status: bool,
   pub pc: u16,
   pub nzp: CC,
-  pub memory: [i16; 2^16]
+  pub memory: [i16; 0x10000]
 }
 
 trait Simulate {
@@ -37,64 +37,64 @@ impl Simulate for CPU {
   fn execute(&mut self, insn: Insn) -> Result<(), CPUError> {
     let mut pc_incr = true;
     match insn {
-      Insn::NOP => {},
+      InsnGen::NOP => {},
       
-      Insn::BR(cc, offset) => 
+      InsnGen::BR(cc, offset) => 
         if cc & self.nzp != 0 { 
           self.pc += offset.value as u16 
         },
       
-      Insn::ADD(rd, rs, rt) => 
+      InsnGen::ADD(rd, rs, rt) => 
         self.regfile[rd] = self.regfile[rs] + self.regfile[rt],
-      Insn::MUL(rd, rs, rt) => 
+      InsnGen::MUL(rd, rs, rt) => 
         self.regfile[rd] = self.regfile[rs] * self.regfile[rt],
-      Insn::SUB(rd, rs, rt) => 
+      InsnGen::SUB(rd, rs, rt) => 
         self.regfile[rd] = self.regfile[rs] - self.regfile[rt],
-      Insn::DIV(rd, rs, rt) => 
+      InsnGen::DIV(rd, rs, rt) => 
         self.regfile[rd] = self.regfile[rs] / self.regfile[rt],
-      Insn::ADDi(rd, rs, n) => 
+      InsnGen::ADDi(rd, rs, n) => 
         self.regfile[rd] = self.regfile[rs] + n.value,
       
-      Insn::CMP(rd, rt) => 
+      InsnGen::CMP(rd, rt) => 
         self.nzp = from_ordering(self.regfile[rd].cmp(&self.regfile[rt])),
-      Insn::CMPu(rd, rt) => 
+      InsnGen::CMPu(rd, rt) => 
         self.nzp = from_ordering((self.regfile[rd] as u16)
                     .cmp(&(self.regfile[rt] as u16))),
-      Insn::CMPi(rd, test) => 
+      InsnGen::CMPi(rd, test) => 
         self.nzp = from_ordering(self.regfile[rd].cmp(&test.value)),
-      Insn::CMPiu(rd, test) => 
+      InsnGen::CMPiu(rd, test) => 
         self.nzp = from_ordering((self.regfile[rd] as u16).cmp(&test.value)),
       
-      Insn::JSR(target) => { 
+      InsnGen::JSR(target) => { 
         pc_incr = false; 
         self.regfile[R7] = self.pc as i16 + 1; 
         self.pc = (self.pc & 0x8000) | (target.value << 4) as u16 
       }
-      Insn::JSRr(rs) => { 
+      InsnGen::JSRr(rs) => { 
         pc_incr = false; 
         self.regfile[R7] = self.pc as i16 + 1; 
         self.pc = self.regfile[rs] as u16
       }
       
-      Insn::AND(rd, rs, rt) => 
+      InsnGen::AND(rd, rs, rt) => 
         self.regfile[rd] = self.regfile[rs] & self.regfile[rt],
-      Insn::NOT(rd, rs)     => 
+      InsnGen::NOT(rd, rs)     => 
         self.regfile[rd] = !self.regfile[rs],
-      Insn::OR (rd, rs, rt) => 
+      InsnGen::OR (rd, rs, rt) => 
         self.regfile[rd] = self.regfile[rs] | self.regfile[rt],
-      Insn::XOR(rd, rs, rt) => 
+      InsnGen::XOR(rd, rs, rt) => 
         self.regfile[rd] = self.regfile[rs] ^ self.regfile[rt],
-      Insn::ANDi(rd, rs, n) => 
+      InsnGen::ANDi(rd, rs, n) => 
         self.regfile[rd] = self.regfile[rs] & (n.value as i16),
       
-      Insn::LDR(rd, rs, offset) => {
+      InsnGen::LDR(rd, rs, offset) => {
         let addr = (self.regfile[rs] as i16 + offset.value) as usize;
         if !self.priv_status && addr >= 0x8000 { 
           return Err(CPUError::Unauthorized) 
         };
         self.regfile[rd] = self.memory[addr]
       },
-      Insn::STR(rd, rs, offset) =>  {
+      InsnGen::STR(rd, rs, offset) =>  {
         let addr = (self.regfile[rs] as i16 + offset.value) as usize;
         if !self.priv_status && addr >= 0x8000 { 
           return Err(CPUError::Unauthorized) 
@@ -102,33 +102,33 @@ impl Simulate for CPU {
         self.memory[addr] = self.regfile[rd]
       },
       
-      Insn::RTI => { 
+      InsnGen::RTI => { 
         pc_incr = false; 
         self.pc = self.regfile[R7] as u16; 
         self.priv_status = false 
       },
       
-      Insn::CONST(rd, c) => self.regfile[rd] = c.value,
+      InsnGen::CONST(rd, c) => self.regfile[rd] = c.value,
       
-      Insn::SLL(rd, rs, amount) => 
+      InsnGen::SLL(rd, rs, amount) => 
         self.regfile[rd] = self.regfile[rs] << amount.value,
-      Insn::SRA(rd, rs, amount) => 
+      InsnGen::SRA(rd, rs, amount) => 
         self.regfile[rd] = ((self.regfile[rs] as u16) >> amount.value) as i16,
-      Insn::SRL(rd, rs, amount) => 
+      InsnGen::SRL(rd, rs, amount) => 
         self.regfile[rd] = self.regfile[rs] >> amount.value,
-      Insn::MOD(rd, rs, rt) => 
+      InsnGen::MOD(rd, rs, rt) => 
         self.regfile[rd] = self.regfile[rs] % self.regfile[rt],
       
-      Insn::JMPr(rs) => {
+      InsnGen::JMPr(rs) => {
         pc_incr = false;
         self.pc = self.regfile[rs] as u16
       },
-      Insn::JMP(target) => self.pc = ((self.pc as i16) + target.value) as u16,
+      InsnGen::JMP(target) => self.pc = ((self.pc as i16) + target.value) as u16,
       
-      Insn::HICONST(rd, c) => 
+      InsnGen::HICONST(rd, c) => 
         self.regfile[rd] = (self.regfile[rd] & 0xFF) | ((c.value << 8) as i16),
       
-      Insn::TRAP(target) => {
+      InsnGen::TRAP(target) => {
         pc_incr = false;
         self.pc = 0x8000 | target.value;
         self.priv_status = true;

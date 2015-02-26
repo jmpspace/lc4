@@ -46,46 +46,46 @@ csws -> ()
   
 #[pub]
 assm -> Assm
-  = "NOP" { Assm::NOP }
-  / "BRp" ws l:label { Assm::BR(P, l) }
-  / "BRp" ws l:label { Assm::BR(Z, l) }
-  / "BRp" ws l:label { Assm::BR(Z|P, l) }
-  / "BRp" ws l:label { Assm::BR(N, l) }
-  / "BRp" ws l:label { Assm::BR(N|P, l) }
-  / "BRp" ws l:label { Assm::BR(N|Z, l) }
-  / "BRp" ws l:label { Assm::BR(N|Z|P, l) }
-  / "ADD" ws d:r_name csws s:r_name csws t:r_name { Assm::ADD(d,s,t) }
-  / "MUL" ws d:r_name csws s:r_name csws t:r_name { Assm::MUL(d,s,t) }
-  / "SUB" ws d:r_name csws s:r_name csws t:r_name { Assm::SUB(d,s,t) }
-  / "DIV" ws d:r_name csws s:r_name csws t:r_name { Assm::DIV(d,s,t) }
-  / "ADD" ws d:r_name csws s:r_name csws i:imm5   { Assm::ADDi(d,s,i) }
-  / "CMP"   ws d:r_name csws t:r_name { Assm::CMP(d,t) }
-  / "CMPU"  ws d:r_name csws t:r_name { Assm::CMPu(d,t) }
-  / "CMPI"  ws d:r_name csws i:imm7   { Assm::CMPi(d,i) }
-  / "CMPIU" ws d:r_name csws u:uimm7  { Assm::CMPiu(d,u) }
-  / "JSRR" ws s:r_name { Assm::JSRr(s) }
-  / "JSR"  ws l:label  { Assm::JSR(l) }
-  / "AND" ws d:r_name csws s:r_name csws t:r_name { Assm::AND(d,s,t) }
-  / "NOT" ws d:r_name csws s:r_name             { Assm::NOT(d,s) }
-  / "OR"  ws d:r_name csws s:r_name csws t:r_name { Assm::OR(d,s,t) }
-  / "XOR" ws d:r_name csws s:r_name csws t:r_name { Assm::XOR(d,s,t) }
-  / "AND" ws d:r_name csws s:r_name csws i:imm5   { Assm::ANDi(d,s,i) }
-  / "LDR" ws d:r_name csws s:r_name csws i:imm6 { Assm::LDR(d,s,i) }
-  / "STR" ws d:r_name csws s:r_name csws i:imm6 { Assm::STR(d,s,i) }
-  / "RTI" { Assm::RTI }
-  / "CONST" ws d:r_name csws i:imm9 { Assm::CONST(d,i) }
-  / "SLL" ws d:r_name csws s:r_name csws u:uimm4 { Assm::SLL(d,s,u) }
-  / "SRA" ws d:r_name csws s:r_name csws u:uimm4 { Assm::SRA(d,s,u) }
-  / "SRL" ws d:r_name csws s:r_name csws u:uimm4 { Assm::SRL(d,s,u) }
-  / "MOD" ws d:r_name csws s:r_name csws t:r_name { Assm::MOD(d,s,t) }
-  / "JMPR" ws s:r_name { Assm::JMPr(s) }
-  / "JMP" ws l:label { Assm::JMP(l) }
-  / "HICONST" ws d:r_name csws u:uimm8 { Assm::HICONST(d,u) }
-  / "TRAP" ws u:uimm8 { Assm::TRAP(u) }
+  = "NOP" { Assm::Insn(InsnGen::NOP )}
+  / "BRp" ws l:label { Assm::Insn(InsnGen::BR(P, l) )}
+  / "BRp" ws l:label { Assm::Insn(InsnGen::BR(Z, l) )}
+  / "BRp" ws l:label { Assm::Insn(InsnGen::BR(Z|P, l) )}
+  / "BRp" ws l:label { Assm::Insn(InsnGen::BR(N, l) )}
+  / "BRp" ws l:label { Assm::Insn(InsnGen::BR(N|P, l) )}
+  / "BRp" ws l:label { Assm::Insn(InsnGen::BR(N|Z, l) )}
+  / "BRp" ws l:label { Assm::Insn(InsnGen::BR(N|Z|P, l) )}
+  / "ADD" ws d:r_name csws s:r_name csws t:r_name { Assm::Insn(InsnGen::ADD(d,s,t) )}
+  / "MUL" ws d:r_name csws s:r_name csws t:r_name { Assm::Insn(InsnGen::MUL(d,s,t) )}
+  / "SUB" ws d:r_name csws s:r_name csws t:r_name { Assm::Insn(InsnGen::SUB(d,s,t) )}
+  / "DIV" ws d:r_name csws s:r_name csws t:r_name { Assm::Insn(InsnGen::DIV(d,s,t) )}
+  / "ADD" ws d:r_name csws s:r_name csws i:imm5   { Assm::Insn(InsnGen::ADDi(d,s,i) )}
+  / "CMP"   ws d:r_name csws t:r_name { Assm::Insn(InsnGen::CMP(d,t) )}
+  / "CMPU"  ws d:r_name csws t:r_name { Assm::Insn(InsnGen::CMPu(d,t) )}
+  / "CMPI"  ws d:r_name csws i:imm7   { Assm::Insn(InsnGen::CMPi(d,i) )}
+  / "CMPIU" ws d:r_name csws u:uimm7  { Assm::Insn(InsnGen::CMPiu(d,u) )}
+  / "JSRR" ws s:r_name { Assm::Insn(InsnGen::JSRr(s) )}
+  / "JSR"  ws l:label  { Assm::Insn(InsnGen::JSR(l) )}
+  / "AND" ws d:r_name csws s:r_name csws t:r_name { Assm::Insn(InsnGen::AND(d,s,t) )}
+  / "NOT" ws d:r_name csws s:r_name             { Assm::Insn(InsnGen::NOT(d,s) )}
+  / "OR"  ws d:r_name csws s:r_name csws t:r_name { Assm::Insn(InsnGen::OR(d,s,t) )}
+  / "XOR" ws d:r_name csws s:r_name csws t:r_name { Assm::Insn(InsnGen::XOR(d,s,t) )}
+  / "AND" ws d:r_name csws s:r_name csws i:imm5   { Assm::Insn(InsnGen::ANDi(d,s,i) )}
+  / "LDR" ws d:r_name csws s:r_name csws i:imm6 { Assm::Insn(InsnGen::LDR(d,s,i) )}
+  / "STR" ws d:r_name csws s:r_name csws i:imm6 { Assm::Insn(InsnGen::STR(d,s,i) )}
+  / "RTI" { Assm::Insn(InsnGen::RTI )}
+  / "CONST" ws d:r_name csws i:imm9 { Assm::Insn(InsnGen::CONST(d,i) )}
+  / "SLL" ws d:r_name csws s:r_name csws u:uimm4 { Assm::Insn(InsnGen::SLL(d,s,u) )}
+  / "SRA" ws d:r_name csws s:r_name csws u:uimm4 { Assm::Insn(InsnGen::SRA(d,s,u) )}
+  / "SRL" ws d:r_name csws s:r_name csws u:uimm4 { Assm::Insn(InsnGen::SRL(d,s,u) )}
+  / "MOD" ws d:r_name csws s:r_name csws t:r_name { Assm::Insn(InsnGen::MOD(d,s,t) )}
+  / "JMPR" ws s:r_name { Assm::Insn(InsnGen::JMPr(s) )}
+  / "JMP" ws l:label { Assm::Insn(InsnGen::JMP(l) )}
+  / "HICONST" ws d:r_name csws u:uimm8 { Assm::Insn(InsnGen::HICONST(d,u) )}
+  / "TRAP" ws u:uimm8 { Assm::Insn(InsnGen::TRAP(u) )}
   / "RET" { Assm::RET }
   / "LEA" ws d:r_name csws l:label { Assm::LEA(d,l) }
   / "LC"  ws d:r_name csws l:label { Assm::LC(d,l) }
-  / ".LABEL" ws l:label { Assm::LABEL(l) }
+  / l:label { Assm::LABEL(l) }
   / ".CODE" { Assm::CODE }
   / ".DATA" { Assm::DATA }
   / ".ADDR" ws u:uimm16 { Assm::ADDR(u) }

@@ -13,38 +13,11 @@ impl FromError<IoError> for AssmError {
 
 pub type Label = String;
 
+pub type LInsn = InsnGen<Label, Label>;
+
 #[derive(Debug)]
-pub enum Assm { 
-  NOP,
-  BR(CC, Label),
-  ADD(RName, RName, RName),
-  MUL(RName, RName, RName),
-  SUB(RName, RName, RName),
-  DIV(RName, RName, RName),
-  ADDi(RName, RName, IMM5),
-  CMP(RName, RName),
-  CMPu(RName, RName),
-  CMPi(RName, IMM7),
-  CMPiu(RName, UIMM7),
-  JSR(Label),
-  JSRr(RName),
-  AND(RName, RName, RName),
-  NOT(RName, RName),
-  OR(RName, RName, RName),
-  XOR(RName, RName, RName),
-  ANDi(RName, RName, IMM5),
-  LDR(RName, RName, IMM6),
-  STR(RName, RName, IMM6),
-  RTI,
-  CONST(RName, IMM9),
-  SLL(RName, RName, UIMM4),
-  SRA(RName, RName, UIMM4),
-  SRL(RName, RName, UIMM4),
-  MOD(RName, RName, RName),
-  JMPr(RName),
-  JMP(Label),
-  HICONST(RName, UIMM8),
-  TRAP(UIMM8),
+pub enum Assm {
+  Insn(LInsn),
   RET,
   LEA(RName, Label),
   LC(RName, Label),
@@ -77,4 +50,10 @@ pub fn read_assembly_file(filename: &str) -> Result<Vec<Assm>, AssmError> {
     assms.push(try!(read_assembly_line(try!(line))))
   }
   Ok(assms)
+}
+
+#[derive(Copy, Debug)]
+pub enum Mem {
+  CODE(Insn),
+  DATA(i16)
 }

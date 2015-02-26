@@ -15,34 +15,34 @@ pub const R5 : RName = 5;
 pub const R6 : RName = 6;
 pub const R7 : RName = 7;
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Copy, Debug, Eq, PartialEq)]
 pub struct IMM16 { pub value : i16 }
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Copy, Debug, Eq, PartialEq)]
 pub struct IMM11 { pub value : i16 }
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Copy, Debug, Eq, PartialEq)]
 pub struct IMM9 { pub value : i16 }
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Copy, Debug, Eq, PartialEq)]
 pub struct IMM7 { pub value : i16 }
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Copy, Debug, Eq, PartialEq)]
 pub struct IMM6 { pub value : i16 }
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Copy, Debug, Eq, PartialEq)]
 pub struct IMM5 { pub value : i16 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Copy, Debug, Eq, PartialEq)]
 pub struct UIMM16 { pub value : u16 }
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Copy, Debug, Eq, PartialEq)]
 pub struct UIMM8 { pub value : u16 }
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Copy, Debug, Eq, PartialEq)]
 pub struct UIMM7 { pub value : u16 }
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Copy, Debug, Eq, PartialEq)]
 pub struct UIMM4 { pub value : u16 }
 
 // Insnructions
 
-#[derive(PartialEq, Eq, Debug)]
-pub enum Insn {
+#[derive(Copy, Debug, Eq, PartialEq)]
+pub enum InsnGen<BrT, JmpT> {
   NOP,
-  BR(CC, IMM9),
+  BR(CC, BrT),
   ADD(RName, RName, RName),
   MUL(RName, RName, RName),
   SUB(RName, RName, RName),
@@ -52,7 +52,7 @@ pub enum Insn {
   CMPu(RName, RName),
   CMPi(RName, IMM7),
   CMPiu(RName, UIMM7),
-  JSR(IMM11),
+  JSR(JmpT),
   JSRr(RName),
   AND(RName, RName, RName),
   NOT(RName, RName),
@@ -68,7 +68,9 @@ pub enum Insn {
   SRL(RName, RName, UIMM4),
   MOD(RName, RName, RName),
   JMPr(RName),
-  JMP(IMM11),
+  JMP(JmpT),
   HICONST(RName, UIMM8),
   TRAP(UIMM8)
 }
+
+pub type Insn = InsnGen<IMM9, IMM11>;
