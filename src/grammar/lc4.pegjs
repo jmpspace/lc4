@@ -30,7 +30,7 @@ r_name -> RName
   = "R" a:r_name_i { a }
 
 label -> Label
-  = [a-z] [a-zA-Z0-9_]* { match_str.to_string() }
+  = [A-Z] [a-zA-Z0-9_]* { match_str.to_string() }
 
 string_s -> String
   = [^"]*  { match_str.to_string() }

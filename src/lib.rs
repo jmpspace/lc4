@@ -1,7 +1,7 @@
 
 #![crate_name = "lc4"]
 #![crate_type = "rlib"]
-#![feature(core, old_io, old_path, plugin, int_uint)]
+#![feature(box_syntax, core, old_io, old_path, plugin, int_uint)]
 #![plugin(peg_syntax_ext)]
 
 extern crate core;

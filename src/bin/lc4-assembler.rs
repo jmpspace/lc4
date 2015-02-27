@@ -1,4 +1,4 @@
-#![feature(core, env)]
+#![feature(box_syntax, core, env)]
 
 extern crate core;
 extern crate lc4;
@@ -8,6 +8,12 @@ use std::env::args;
 
 use lc4::architecture::*;
 use lc4::assembler::*;
+
+pub fn pad16(addr: u16) -> u16 {
+  let mut padded = addr & 0xFFF0;
+  if padded < addr { padded += 0x10; }
+  padded
+}
 
 pub fn main() -> () {
   let ref source_file = match args().nth(1) {
@@ -21,7 +27,7 @@ pub fn main() -> () {
   println!("Using source file '{}'", source_file);
 
   let assms: Vec<Assm> = match read_assembly_file(source_file) {
-    Err(err) => panic!(err),
+    Err(err) => panic!("{:?}",err),
     Ok(assms) => assms
   };
 
@@ -41,6 +47,7 @@ pub fn main() -> () {
   /* First-pass, setup labels */
 
   for &ref assm in assms.iter() {
+    println!("{:?}", assm);
     match assm {
 
       // Instructions and Pseudo-Instructions
@@ -89,16 +96,8 @@ pub fn main() -> () {
 
       &Assm::FALIGN => {
         match section {
-          Section::CODE => {
-            let mut padded = code_addr & 0xFFF0;
-            if padded < code_addr { padded += 0x10; }
-            code_addr = padded
-          }
-          Section::DATA => {
-            let mut padded = data_addr & 0xFFF0;
-            if padded < data_addr { padded += 0x10; }
-            data_addr = padded
-          }
+          Section::CODE => code_addr = pad16(code_addr),
+          Section::DATA => data_addr = pad16(data_addr)
         }
       },
 
@@ -133,13 +132,35 @@ pub fn main() -> () {
     }
   }
 
+  // Reset section addresses
+  data_addr = pad16(code_addr);
+  code_addr = 0;
+
   /* Second pass, write to memory */
 
-  let mut memory: [Mem; 0x10000] = [Mem::DATA(0); 0x10000];
+  let mut memory = box [Mem::DATA(0); 0x10000];
+  //let mut memory: [Mem] = repeat(Mem::DATA(0)).take(0x10000).collect();
 
   for &ref assm in assms.iter() {
     match assm {
-      _ => {}
+      &Assm::Insn(InsnGen::BR(cc, ref target)) => {
+        memory[code_addr as usize] = Mem::CODE(InsnGen::BR(cc, IMM9{value: (code_addr_labels[target.clone()] - (code_addr + 1)) as i16}));
+        code_addr += 1
+      },
+      &Assm::Insn(InsnGen::JSR(ref target)) => {
+        memory[code_addr as usize] = Mem::CODE(InsnGen::JSR(IMM11{value: (code_addr_labels[target.clone()] - (code_addr & 0x8000)) as i16 >> 4}));
+        code_addr += 1
+      },
+      &Assm::Insn(InsnGen::JMP(ref target)) => {
+        memory[code_addr as usize] = Mem::CODE(InsnGen::JMP(IMM11{value: (code_addr_labels[target.clone()] - (code_addr + 1)) as i16}));
+        code_addr += 1
+      },
+      &Assm::Insn(ref insn) => {
+        memory[code_addr as usize] = Mem::CODE(partial_cast(insn));
+        code_addr += 1
+      }
+
+      _ => panic!("Not implemented {:?}", assm)
     }
   }
 

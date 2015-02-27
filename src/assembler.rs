@@ -52,7 +52,7 @@ pub fn read_assembly_file(filename: &str) -> Result<Vec<Assm>, AssmError> {
   Ok(assms)
 }
 
-#[derive(Copy, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum Mem {
   CODE(Insn),
   DATA(i16)

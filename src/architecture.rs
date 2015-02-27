@@ -15,31 +15,31 @@ pub const R5 : RName = 5;
 pub const R6 : RName = 6;
 pub const R7 : RName = 7;
 
-#[derive(Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IMM16 { pub value : i16 }
-#[derive(Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IMM11 { pub value : i16 }
-#[derive(Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IMM9 { pub value : i16 }
-#[derive(Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IMM7 { pub value : i16 }
-#[derive(Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IMM6 { pub value : i16 }
-#[derive(Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IMM5 { pub value : i16 }
 
-#[derive(Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct UIMM16 { pub value : u16 }
-#[derive(Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct UIMM8 { pub value : u16 }
-#[derive(Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct UIMM7 { pub value : u16 }
-#[derive(Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct UIMM4 { pub value : u16 }
 
 // Insnructions
 
-#[derive(Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum InsnGen<BrT, JmpT> {
   NOP,
   BR(CC, BrT),
@@ -74,3 +74,11 @@ pub enum InsnGen<BrT, JmpT> {
 }
 
 pub type Insn = InsnGen<IMM9, IMM11>;
+
+pub fn partial_cast<A,B,C,D>(insn: &InsnGen<A,B>) -> InsnGen<C,D> {
+  match insn {
+    &InsnGen::NOP => InsnGen::NOP,
+    &InsnGen::BR(_,_) => panic!("Partial case fails for BR"),
+    _ => panic!("Not implemented")
+  }
+}
