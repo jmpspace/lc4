@@ -1,6 +1,8 @@
 use core::error::FromError;
-use architecture::*;
+use std::collections::HashMap;
 use std::old_io::{BufferedReader, File, IoError};
+
+use architecture::*;
 
 #[derive(Debug)]
 pub enum AssmError { IoError(IoError), ParseError(String) }
@@ -50,6 +52,203 @@ pub fn read_assembly_file(filename: &str) -> Result<Vec<Assm>, AssmError> {
     assms.push(try!(read_assembly_line(try!(line))))
   }
   Ok(assms)
+}
+
+#[derive(Copy, Debug, Eq, PartialEq)]
+pub enum Section { CODE, DATA }
+
+pub struct AssmData {
+  pub memory: Box<[Mem; 0x10000]>,
+  pub labels: HashMap<Label, (Section, u16)>,
+  pub heap: u16
+}
+
+pub fn pad16(addr: u16) -> u16 {
+  let mut padded = addr & 0xFFF0;
+  if padded < addr { padded += 0x10; }
+  padded
+}
+
+pub fn assemble(assm_lines: Vec<Assm>) -> AssmData {
+
+  let mut section: Section = Section::CODE;
+
+  let mut code_addr: u16 = 0;
+  let mut data_addr: u16 = 0;
+  
+  let mut addr_labels: HashMap<Label, (Section, u16)> = HashMap::new();
+  let mut value_labels: HashMap<Label, i16> = HashMap::new();
+
+  /* First-pass, setup labels */
+
+  for &ref assm in assm_lines.iter() {
+    match assm {
+
+      // Instructions and Pseudo-Instructions
+      &Assm::Insn(_) => {
+        assert!(section == Section::CODE);
+        code_addr += 1
+      },
+      &Assm::RET => {
+        assert!(section == Section::CODE);
+        code_addr += 1
+      },
+      &Assm::LEA(_, _) => {
+        assert!(section == Section::CODE);
+        code_addr += 1
+      },
+      &Assm::LC(_, _) => {
+        assert!(section == Section::CODE);
+        code_addr += 1
+      },
+
+      // Assembler Directives
+      &Assm::LABEL(ref l) => {
+        if addr_labels.contains_key(l) {
+          panic!("Cannot have duplicate labels")
+        }
+        addr_labels.insert(l.clone(), (section, code_addr));
+      },
+
+      &Assm::CODE => section = Section::CODE,
+      &Assm::DATA => section = Section::DATA,
+
+      &Assm::ADDR(ref u) => 
+        match section {
+          Section::CODE => code_addr = u.value,
+          Section::DATA => data_addr = u.value
+        },
+
+      &Assm::FALIGN => {
+        match section {
+          Section::CODE => code_addr = pad16(code_addr),
+          Section::DATA => data_addr = pad16(data_addr)
+        }
+      },
+
+      &Assm::FILL(_) => {
+        assert!(section == Section::DATA);
+        data_addr += 1
+      },
+      &Assm::STRINGZ(ref s) => {
+        assert!(section == Section::DATA);
+        data_addr += s.len() as u16
+      },
+
+      &Assm::BLKW(ref u) => {
+        match section {
+          Section::CODE => code_addr += u.value,
+          Section::DATA => data_addr += u.value
+        }
+      },
+
+      &Assm::LCONST(ref l, ref i) => {
+        if value_labels.contains_key(l) {
+          panic!("Cannot have duplicate labels")
+        }
+        value_labels.insert(l.clone(), i.value);
+      }
+      &Assm::LUCONST(ref l, ref u) => {
+        if value_labels.contains_key(l) {
+          panic!("Cannot have duplicate labels")
+        }
+        value_labels.insert(l.clone(), u.value as i16);
+      }
+    }
+  }
+    
+  /* Second pass, write to memory */
+
+  let mut memory = box [Mem::DATA(0); 0x10000];
+  let base_data_addr = pad16(code_addr);
+  let base_heap_addr = pad16(base_data_addr + data_addr);
+  let mut addr: u16 = 0;
+
+  for &ref assm in assm_lines.iter() {
+    match assm {
+      
+      &Assm::LABEL(ref target) => {
+        let (label_section, label_addr) = addr_labels[target.clone()];
+        match label_section {
+          Section::CODE => addr = label_addr,
+          Section::DATA => addr = label_addr + base_data_addr
+        }
+      },
+
+      &Assm::Insn(InsnGen::BR(cc, ref target)) => {
+        let (section, label_addr) = addr_labels[target.clone()];
+        assert!(section == Section::CODE);
+        memory[addr as usize] = Mem::CODE(InsnGen::BR(cc, IMM9{value: (label_addr - (addr + 1)) as i16}));
+        addr += 1
+      },
+      &Assm::Insn(InsnGen::JSR(ref target)) => {
+        let (section, label_addr) = addr_labels[target.clone()];
+        assert!(section == Section::CODE);
+        memory[addr as usize] = Mem::CODE(InsnGen::JSR(IMM11{value: (label_addr - (addr & 0x8000)) as i16 >> 4}));
+        addr += 1
+      },
+      &Assm::Insn(InsnGen::JMP(ref target)) => {
+        let (section, label_addr) = addr_labels[target.clone()];
+        assert!(section == Section::CODE);
+        memory[addr as usize] = Mem::CODE(InsnGen::JMP(IMM11{value: (label_addr - (addr + 1)) as i16}));
+        addr += 1
+      },
+      
+      &Assm::Insn(ref insn) => {
+        memory[addr as usize] = Mem::CODE(partial_cast(insn));
+        addr += 1
+      }
+
+      &Assm::RET => {
+        memory[addr as usize] = Mem::CODE(InsnGen::JMPr(R7));
+        addr += 1
+      },
+
+      &Assm::LEA(rd, ref target) => {
+        let (section, label_addr) = addr_labels[target.clone()];
+        let label_addr = match section {
+          Section::CODE => label_addr,
+          Section::DATA => label_addr + base_data_addr
+        };
+        let low = IMM9{value: label_addr as i16 & 0x01FF};
+        let high = UIMM8{value: label_addr >> 8};
+        memory[addr as usize] = Mem::CODE(InsnGen::CONST(rd, low));
+        memory[addr as usize + 1] = Mem::CODE(InsnGen::HICONST(rd, high));
+        addr += 2
+      },
+
+      &Assm::LC(rd, ref target) => {
+        let label_value = value_labels[target.clone()];
+        let low = IMM9{value: label_value & 0x01FF};
+        let high = UIMM8{value: label_value as u16 >> 8};
+        memory[addr as usize] = Mem::CODE(InsnGen::CONST(rd, low));
+        memory[addr as usize + 1] = Mem::CODE(InsnGen::HICONST(rd, high));
+        addr += 2
+      }
+
+      &Assm::CODE => (),
+      &Assm::DATA => (),
+      &Assm::ADDR(_) => (),
+      &Assm::FALIGN => (),
+
+      &Assm::FILL(i) => {
+        memory[addr as usize] = Mem::DATA(i.value);
+        addr += 1
+      },
+
+      &Assm::STRINGZ(_) => panic!("Not implemented"),
+
+      &Assm::BLKW(_) => (),
+      &Assm::LCONST(_,_) => (),
+      &Assm::LUCONST(_,_) => ()
+    }
+  }
+
+  AssmData{
+    memory: memory,
+    labels: addr_labels,
+    heap: base_heap_addr
+  }
 }
 
 #[derive(Clone, Copy, Debug)]
