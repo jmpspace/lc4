@@ -6,7 +6,8 @@
 
 extern crate core;
 
-pub mod architecture;
+mod architecture;
 pub mod assembler;
-pub mod controller;
+mod controller;
+mod encoder;
 pub mod processor;

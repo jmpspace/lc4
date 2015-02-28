@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::old_io::{BufferedReader, File, IoError};
 
 use architecture::*;
+use encoder::*;
 
 #[derive(Debug)]
 pub enum AssmError { IoError(IoError), ParseError(String) }
@@ -254,13 +255,6 @@ pub fn assemble(assm_lines: Vec<Assm>) -> AssmData {
     memory: memory,
     labels: addr_labels,
     heap: base_heap_addr
-  }
-}
-
-pub fn encode_insn(insn: Insn) -> i16 {
-  match insn {
-    InsnGen::NOP => 0x0000,
-    _ => panic!("Not imeplemented")
   }
 }
 
