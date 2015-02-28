@@ -257,9 +257,16 @@ pub fn assemble(assm_lines: Vec<Assm>) -> AssmData {
   }
 }
 
+pub fn encode_insn(insn: Insn) -> i16 {
+  match insn {
+    InsnGen::NOP => 0x0000,
+    _ => panic!("Not imeplemented")
+  }
+}
+
 pub fn encode_word(mem: Mem) -> i16 {
   match mem {
-    case CODE(insn) => panic!("Not implemented"),
-    case DATA(i) => i
+    Mem::CODE(insn) => encode_insn(insn),
+    Mem::DATA(i) => i
   }
 }
