@@ -17,13 +17,13 @@ pub type LInsn = InsnGen<Label, Label>;
 
 #[derive(Debug)]
 pub enum Assm {
+  LABEL(Label),
   Insn(LInsn),
   RET,
   LEA(RName, Label),
   LC(RName, Label),
-  DATA,
-  LABEL(Label),
   CODE,
+  DATA,
   ADDR(UIMM16),
   FALIGN,
   FILL(IMM16),

@@ -77,8 +77,35 @@ pub type Insn = InsnGen<IMM9, IMM11>;
 
 pub fn partial_cast<A,B,C,D>(insn: &InsnGen<A,B>) -> InsnGen<C,D> {
   match insn {
-    &InsnGen::NOP => InsnGen::NOP,
-    &InsnGen::BR(_,_) => panic!("Partial case fails for BR"),
-    _ => panic!("Not implemented")
+    &InsnGen::NOP               => InsnGen::NOP,
+    &InsnGen::BR(_,_)           => panic!("Partial case fails for BR"),
+    &InsnGen::ADD(rd, rs, rt)   => InsnGen::ADD(rd, rs, rt),
+    &InsnGen::MUL(rd, rs, rt)   => InsnGen::MUL(rd, rs, rt),
+    &InsnGen::SUB(rd, rs, rt)   => InsnGen::SUB(rd, rs, rt),
+    &InsnGen::DIV(rd, rs, rt)   => InsnGen::DIV(rd, rs, rt),
+    &InsnGen::ADDi(rd, rs, rt)  => InsnGen::ADDi(rd, rs, rt),
+    &InsnGen::CMP(rd, rt)       => InsnGen::CMP(rd, rt),
+    &InsnGen::CMPu(rd, rt)      => InsnGen::CMPu(rd, rt),
+    &InsnGen::CMPi(rd, i)       => InsnGen::CMPi(rd, i),
+    &InsnGen::CMPiu(rd, u)      => InsnGen::CMPiu(rd, u),
+    &InsnGen::JSR(_)            => panic!("Partial case fails for JSR"),
+    &InsnGen::JSRr(rs)          => InsnGen::JSRr(rs),
+    &InsnGen::AND(rd, rs, rt)   => InsnGen::AND(rd, rs, rt),
+    &InsnGen::NOT(rd, rs)       => InsnGen::NOT(rd, rs),
+    &InsnGen::OR(rd, rs, rt)    => InsnGen::OR(rd, rs, rt),
+    &InsnGen::XOR(rd, rs, rt)   => InsnGen::XOR(rd, rs, rt),
+    &InsnGen::ANDi(rd, rs, i)   => InsnGen::ANDi(rd, rs, i),
+    &InsnGen::LDR(rd, rs, i)    => InsnGen::LDR(rd, rs, i),
+    &InsnGen::STR(rd, rs, i)    => InsnGen::STR(rd, rs, i),
+    &InsnGen::RTI               => InsnGen::RTI,
+    &InsnGen::CONST(rd, i)      => InsnGen::CONST(rd, i),
+    &InsnGen::SLL(rd, rs, u)    => InsnGen::SLL(rd, rs, u),
+    &InsnGen::SRA(rd, rs, u)    => InsnGen::SRA(rd, rs, u),
+    &InsnGen::SRL(rd, rs, u)    => InsnGen::SRL(rd, rs, u),
+    &InsnGen::MOD(rd, rs, rt)   => InsnGen::MOD(rd, rs, rt),
+    &InsnGen::JMPr(rs)          => InsnGen::JMPr(rs),
+    &InsnGen::JMP(_)            => panic!("Partial case fails for JMP"),
+    &InsnGen::HICONST(rd, u)    => InsnGen::HICONST(rd, u),
+    &InsnGen::TRAP(u)           => InsnGen::TRAP(u)
   }
 }
