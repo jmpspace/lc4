@@ -57,6 +57,12 @@ pub fn read_assembly_file(filename: &str) -> Result<Vec<Assm>, AssmError> {
 #[derive(Copy, Debug, Eq, PartialEq)]
 pub enum Section { CODE, DATA }
 
+#[derive(Clone, Copy, Debug)]
+pub enum Mem {
+  CODE(Insn),
+  DATA(i16)
+}
+
 pub struct AssmData {
   pub memory: Box<[Mem; 0x10000]>,
   pub labels: HashMap<Label, (Section, u16)>,
@@ -251,8 +257,9 @@ pub fn assemble(assm_lines: Vec<Assm>) -> AssmData {
   }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub enum Mem {
-  CODE(Insn),
-  DATA(i16)
+pub fn encode_word(mem: Mem) -> i16 {
+  match mem {
+    case CODE(insn) => panic!("Not implemented"),
+    case DATA(i) => i
+  }
 }
