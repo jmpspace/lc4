@@ -1,6 +1,6 @@
 use core::error::FromError;
 use std::collections::HashMap;
-use std::old_io::{BufferedReader, File, IoError};
+use std::old_io::{BufferedReader, File, FileAccess, FileMode, IoError, IoResult};
 
 use architecture::*;
 use encoder::*;
@@ -263,4 +263,12 @@ pub fn encode_word(mem: Mem) -> i16 {
     Mem::CODE(insn) => encode_insn(insn),
     Mem::DATA(i) => i
   }
+}
+
+pub fn write_object_file(assm_data: AssmData, out_file: String) -> IoResult<()> {
+  let mut file = try!(File::open_mode(&Path::new(out_file), FileMode::Truncate, FileAccess::Write));
+  for addr in 0..assm_data.heap {
+    try!(file.write_be_i16(encode_word(assm_data.memory[addr as usize])))
+  }
+  Ok(())
 }
