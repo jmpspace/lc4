@@ -1,4 +1,5 @@
 use architecture::*;
+use assm_data::*;
 use controller::*;
 use core::error::FromError;
 use std::cmp::Ordering;
@@ -8,15 +9,16 @@ pub struct CPU {
   pub priv_status: bool,
   pub pc: u16,
   pub nzp: CC,
-  pub memory: [i16; 0x10000]
+  pub memory: Memory<i16>
 }
 
-trait Simulate {
+pub trait Simulate {
   fn execute(&mut self, insn: Insn) -> Result<(), CPUError>;
   fn step(&mut self) -> Result<(), CPUError>;
 }
 
-enum CPUError { DecodeError(DecodeError), Unauthorized }
+#[derive(Debug)]
+pub enum CPUError { DecodeError(DecodeError), Unauthorized }
 
 impl FromError<DecodeError> for CPUError {
   fn from_error(err: DecodeError) -> CPUError {
@@ -29,6 +31,16 @@ fn from_ordering(ord: Ordering) -> CC {
     Ordering::Less => N,
     Ordering::Equal => Z,
     Ordering::Greater => P
+  }
+}
+
+pub fn boot(assm_data: AssmData<i16>) -> CPU {
+  CPU{
+    regfile: [0;8],
+    priv_status: false,
+    pc: 0,
+    nzp: Z,
+    memory: assm_data.memory
   }
 }
 

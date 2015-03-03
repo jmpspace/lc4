@@ -1,6 +1,6 @@
 use architecture::*;
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum DecodeError { BadOpcode }
 
 pub trait Controller {

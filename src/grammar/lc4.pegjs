@@ -1,6 +1,7 @@
 
 use architecture::*;
 use assembler::*;
+use assm_data::*;
 
 imm16 -> IMM16
   = [-]? [1-9] [0-9]* { IMM16{value: match_str.parse().unwrap()} }

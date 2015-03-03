@@ -1,9 +1,9 @@
 use core::error::FromError;
 use std::collections::HashMap;
-use std::old_io::{BufferedReader, File, FileAccess, FileMode, IoError, IoResult};
+use std::old_io::{BufferedReader, File, IoError};
 
 use architecture::*;
-use encoder::*;
+use assm_data::*;
 
 #[derive(Debug)]
 pub enum AssmError { IoError(IoError), ParseError(String) }
@@ -14,7 +14,6 @@ impl FromError<IoError> for AssmError {
   }
 }
 
-pub type Label = String;
 
 pub type LInsn = InsnGen<Label, Label>;
 
@@ -55,28 +54,13 @@ pub fn read_assembly_file(filename: &str) -> Result<Vec<Assm>, AssmError> {
   Ok(assms)
 }
 
-#[derive(Copy, Debug, Eq, PartialEq)]
-pub enum Section { CODE, DATA }
-
-#[derive(Clone, Copy, Debug)]
-pub enum Mem {
-  CODE(Insn),
-  DATA(i16)
-}
-
-pub struct AssmData {
-  pub memory: Box<[Mem; 0x10000]>,
-  pub labels: HashMap<Label, (Section, u16)>,
-  pub heap: u16
-}
-
 pub fn pad16(addr: u16) -> u16 {
   let mut padded = addr & 0xFFF0;
   if padded < addr { padded += 0x10; }
   padded
 }
 
-pub fn assemble(assm_lines: Vec<Assm>) -> AssmData {
+pub fn assemble(assm_lines: Vec<Assm>) -> AssmData<Mem> {
 
   let mut section: Section = Section::CODE;
 
@@ -86,7 +70,7 @@ pub fn assemble(assm_lines: Vec<Assm>) -> AssmData {
   let mut addr_labels: HashMap<Label, (Section, u16)> = HashMap::new();
   let mut value_labels: HashMap<Label, i16> = HashMap::new();
 
-  /* First-pass, setup labels */
+  println!("First pass to place labels");
 
   for &ref assm in assm_lines.iter() {
     match assm {
@@ -164,14 +148,18 @@ pub fn assemble(assm_lines: Vec<Assm>) -> AssmData {
     }
   }
     
-  /* Second pass, write to memory */
+  println!("Second pass to place instructions");
 
-  let mut memory = box [Mem::DATA(0); 0x10000];
   let base_data_addr = pad16(code_addr);
   let base_heap_addr = pad16(base_data_addr + data_addr);
+  let mut memory: Memory<Mem> = box [Mem::DATA(0);0x10000];
   let mut addr: u16 = 0;
 
+  println!("heap {}", base_heap_addr);
+
   for &ref assm in assm_lines.iter() {
+    println!("PC {} Insn {:?}", addr, assm);
+
     match assm {
       
       &Assm::LABEL(ref target) => {
@@ -256,19 +244,4 @@ pub fn assemble(assm_lines: Vec<Assm>) -> AssmData {
     labels: addr_labels,
     heap: base_heap_addr
   }
-}
-
-pub fn encode_word(mem: Mem) -> i16 {
-  match mem {
-    Mem::CODE(insn) => encode_insn(insn),
-    Mem::DATA(i) => i
-  }
-}
-
-pub fn write_object_file(assm_data: AssmData, out_file: String) -> IoResult<()> {
-  let mut file = try!(File::open_mode(&Path::new(out_file), FileMode::Truncate, FileAccess::Write));
-  for addr in 0..assm_data.heap {
-    try!(file.write_be_i16(encode_word(assm_data.memory[addr as usize])))
-  }
-  Ok(())
 }

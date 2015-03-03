@@ -12,5 +12,9 @@ path = "src/lib.rs"
 name = "lc4-assemble"
 path = "src/bin/lc4-assembler.rs"
 
+[[bin]]
+name = "lc4-debug"
+path = "src/bin/lc4-debug.rs"
+
 [dependencies]
 peg = "0.1.7"
