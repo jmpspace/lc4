@@ -45,12 +45,10 @@ pub fn main() -> () {
     match liner {
       Err(err) => panic!("{:?}", err),
       Ok(line) => match line.trim() {
-        "s" => {
-          match cpu.step() {
-            Err(err) => panic!("{:?}", err),
-            Ok(()) => ()
-          };
-          print_proc(&cpu);
+        "p" => print_proc(&cpu),
+        "s" => match cpu.step() {
+          Err(err) => panic!("{:?}", err),
+          Ok(()) => ()
         },
         "q" => break,
         _ => continue
