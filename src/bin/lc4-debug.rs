@@ -5,6 +5,7 @@ extern crate lc4;
 use std::cmp::*;
 use std::env::args;
 use std::iter::range;
+use std::old_io::*;
 
 use lc4::assm_data::*;
 use lc4::processor::*;
@@ -38,12 +39,24 @@ pub fn main() -> () {
 
   print_proc(&cpu);
 
-  for _ in [0;3].iter() {
-    match cpu.step() {
+  let mut stdin = stdin();
+
+  for liner in stdin.lock().lines() {
+    match liner {
       Err(err) => panic!("{:?}", err),
-      Ok(()) => ()
+      Ok(line) => match line.trim() {
+        "s" => {
+          match cpu.step() {
+            Err(err) => panic!("{:?}", err),
+            Ok(()) => ()
+          };
+          print_proc(&cpu);
+        },
+        "q" => break,
+        _ => continue
+      }
     }
-    print_proc(&cpu);
+    
   }
   
 }
