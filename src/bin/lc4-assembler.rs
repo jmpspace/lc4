@@ -1,11 +1,10 @@
-#![feature(box_syntax, core, env)]
+#![feature(box_syntax, core)]
 
 extern crate core;
 extern crate lc4;
 
 use std::env::args;
 use std::vec::Vec;
-use std::str::StrExt;
 
 use lc4::assembler::*;
 use lc4::assm_data::*;
@@ -42,7 +41,7 @@ pub fn main() -> () {
 
   println!("Heap starts at {:?}", assm_data.heap);
 
-  let out_file = StrExt::replace(source_file.as_slice(), ".lc4", ".lc4obj");
+  let mut out_file = source_file.clone(); out_file.push_str("obj");
 
   match write_object_file(assm_data, out_file.as_slice()) {
     Err(err) => panic!("{:?}",err),

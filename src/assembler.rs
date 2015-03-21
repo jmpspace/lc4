@@ -6,7 +6,7 @@ use architecture::*;
 use assm_data::*;
 
 #[derive(Debug)]
-pub enum AssmError { IoError(IoError), ParseError(String) }
+pub enum AssmError { IoError(IoError), ParseError(lc4_grammar::ParseError) }
 
 impl FromError<IoError> for AssmError {
   fn from_error(err: IoError) -> AssmError {
@@ -14,6 +14,11 @@ impl FromError<IoError> for AssmError {
   }
 }
 
+impl FromError<lc4_grammar::ParseError> for AssmError {
+  fn from_error(err: lc4_grammar::ParseError) -> AssmError {
+    AssmError::ParseError(err)
+  }
+}
 
 pub type LInsn = InsnGen<Label, Label>;
 
@@ -37,19 +42,13 @@ pub enum Assm {
 
 peg_file! lc4_grammar("grammar/lc4.pegjs");
 
-fn read_assembly_line(line: String) -> Result<Assm, AssmError> {
-  match lc4_grammar::assm(&line.trim()[..]) {
-    Err(err) => Err(AssmError::ParseError(err)),
-    Ok(assm) => Ok(assm)
-  }
-}
-
 pub fn read_assembly_file(filename: &str) -> Result<Vec<Assm>, AssmError> {
   let file = try!(File::open(&Path::new(filename)));
   let mut reader = BufferedReader::new(file);
   let mut assms = Vec::new();
   for line in reader.lines() {
-    assms.push(try!(read_assembly_line(try!(line))))
+
+    assms.push(try!(lc4_grammar::assm(&try!(line).trim()[..])))
   }
   Ok(assms)
 }
