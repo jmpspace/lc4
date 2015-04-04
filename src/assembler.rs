@@ -1,6 +1,7 @@
 use std::convert::From;
 use std::collections::HashMap;
 use std::old_io::{BufferedReader, File, IoError};
+use std::path::Path;
 
 use architecture::*;
 use assm_data::*;
