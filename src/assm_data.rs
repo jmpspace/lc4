@@ -1,6 +1,6 @@
+use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::collections::HashMap;
 use std::io;
-use std::old_io::{FileAccess, FileMode, Reader, Writer};
 use std::fs::{File, OpenOptions};
 use std::path::Path;
 
@@ -36,9 +36,9 @@ pub fn encode_word(mem: Mem) -> i16 {
 pub fn write_object_file(assm_data: AssmData<Mem>, out_file: &str) -> Result<(), io::Error> {
     let mut options = OpenOptions::new().read(true).write(true).truncate(true);
     let mut file = try!(options.open(&Path::new(out_file)));
-    try!(file.write_be_u16(assm_data.heap));
+    try!(file.write_u16::<BigEndian>(assm_data.heap));
     for addr in 0..assm_data.heap {
-        try!(file.write_be_i16(encode_word(assm_data.memory[addr as usize])))
+        try!(file.write_i16::<BigEndian>(encode_word(assm_data.memory[addr as usize])))
     }
     Ok(())
 }
@@ -46,10 +46,10 @@ pub fn write_object_file(assm_data: AssmData<Mem>, out_file: &str) -> Result<(),
 pub fn read_object_file(in_file: &str) -> Result<AssmData<i16>, io::Error> {
     let mut options = OpenOptions::new().read(true);
     let mut file = try!(options.open(&Path::new(in_file)));
-    let heap: u16 = try!(file.read_be_u16());
+    let heap: u16 = try!(file.read_u16::<BigEndian>());
     let mut memory: Memory<i16> = box [0;0x10000];
     for addr in 0..heap {
-        memory[addr as usize] = try!(file.read_be_i16());
+        memory[addr as usize] = try!(file.read_i16::<BigEndian>());
     }
     Ok(AssmData{
         memory: memory,

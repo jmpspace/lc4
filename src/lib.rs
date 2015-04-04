@@ -4,7 +4,8 @@
 #![feature(box_syntax, core, old_io, old_path, plugin, int_uint)]
 #![plugin(peg_syntax_ext)]
 
-extern crate core;
+//extern crate core;
+extern crate byteorder;
 
 pub mod architecture;
 pub mod assembler;

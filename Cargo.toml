@@ -18,3 +18,4 @@ path = "src/bin/lc4-debug.rs"
 
 [dependencies]
 peg = "0.2.*"
+byteorder = "0.3.*"
