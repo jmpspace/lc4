@@ -6,6 +6,13 @@ pub const P : CC = 1;
 
 pub type RName = usize;
 
+pub const R0 : RName = 0;
+pub const R1 : RName = 1;
+pub const R2 : RName = 2;
+pub const R3 : RName = 3;
+pub const R4 : RName = 4;
+pub const R5 : RName = 5;
+pub const R6 : RName = 6;
 pub const R7 : RName = 7;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

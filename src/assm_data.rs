@@ -1,7 +1,7 @@
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::collections::HashMap;
 use std::io;
-use std::fs::{File, OpenOptions};
+use std::fs::OpenOptions;
 use std::path::Path;
 
 use architecture::*;
@@ -34,7 +34,8 @@ pub fn encode_word(mem: Mem) -> i16 {
 }
 
 pub fn write_object_file(assm_data: AssmData<Mem>, out_file: &str) -> Result<(), io::Error> {
-    let mut options = OpenOptions::new().read(true).write(true).truncate(true);
+    let mut options = OpenOptions::new();
+    options.read(true).write(true).truncate(true);
     let mut file = try!(options.open(&Path::new(out_file)));
     try!(file.write_u16::<BigEndian>(assm_data.heap));
     for addr in 0..assm_data.heap {
@@ -44,7 +45,8 @@ pub fn write_object_file(assm_data: AssmData<Mem>, out_file: &str) -> Result<(),
 }
 
 pub fn read_object_file(in_file: &str) -> Result<AssmData<i16>, io::Error> {
-    let mut options = OpenOptions::new().read(true);
+    let mut options = OpenOptions::new();
+    options.read(true);
     let mut file = try!(options.open(&Path::new(in_file)));
     let heap: u16 = try!(file.read_u16::<BigEndian>());
     let mut memory: Memory<i16> = box [0;0x10000];

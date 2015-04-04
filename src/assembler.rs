@@ -1,18 +1,19 @@
 use std::convert::From;
 use std::collections::HashMap;
 use std::io;
+use std::io::{BufRead, BufReader};
 use std::path::Path;
-use std::fs::{File, OpenOptions};
+use std::fs::OpenOptions;
 
 use architecture::*;
 use assm_data::*;
 
 #[derive(Debug)]
-pub enum AssmError { IoError(IoError), ParseError(lc4_grammar::ParseError) }
+pub enum AssmError { IoError(io::Error), ParseError(lc4_grammar::ParseError) }
 
 impl From<io::Error> for AssmError {
     fn from(err: io::Error) -> AssmError {
-        AssmError::io::Error(err)
+        AssmError::IoError(err)
     }
 }
 
@@ -45,9 +46,10 @@ pub enum Assm {
 peg_file! lc4_grammar("grammar/lc4.pegjs");
 
 pub fn read_assembly_file(filename: &str) -> Result<Vec<Assm>, AssmError> {
-    let mut options = OpenOptions::new().read(true);
+    let mut options = OpenOptions::new();
+    options.read(true);
     let file = try!(options.open(&Path::new(filename)));
-    let mut reader = BufferedReader::new(file);
+    let reader = BufReader::new(file);
     let mut assms = Vec::new();
     for line in reader.lines() {
 
@@ -165,7 +167,7 @@ pub fn assemble(assm_lines: Vec<Assm>) -> AssmData<Mem> {
         match assm {
 
             &Assm::LABEL(ref target) => {
-                let (label_section, label_addr) = addr_labels[target.clone()];
+                let (label_section, label_addr) = addr_labels[&target.clone()];
                 match label_section {
                     Section::CODE => addr = label_addr,
                     Section::DATA => addr = label_addr + base_data_addr
@@ -173,19 +175,19 @@ pub fn assemble(assm_lines: Vec<Assm>) -> AssmData<Mem> {
             },
 
             &Assm::Insn(InsnGen::BR(cc, ref target)) => {
-                let (section, label_addr) = addr_labels[target.clone()];
+                let (section, label_addr) = addr_labels[&target.clone()];
                 assert!(section == Section::CODE);
                 memory[addr as usize] = Mem::CODE(InsnGen::BR(cc, IMM9{value: (label_addr - (addr + 1)) as i16}));
                 addr += 1
             },
             &Assm::Insn(InsnGen::JSR(ref target)) => {
-                let (section, label_addr) = addr_labels[target.clone()];
+                let (section, label_addr) = addr_labels[&target.clone()];
                 assert!(section == Section::CODE);
                 memory[addr as usize] = Mem::CODE(InsnGen::JSR(IMM11{value: (label_addr - (addr & 0x8000)) as i16 >> 4}));
                 addr += 1
             },
             &Assm::Insn(InsnGen::JMP(ref target)) => {
-                let (section, label_addr) = addr_labels[target.clone()];
+                let (section, label_addr) = addr_labels[&target.clone()];
                 assert!(section == Section::CODE);
                 memory[addr as usize] = Mem::CODE(InsnGen::JMP(IMM11{value: (label_addr - (addr + 1)) as i16}));
                 addr += 1
@@ -202,7 +204,7 @@ pub fn assemble(assm_lines: Vec<Assm>) -> AssmData<Mem> {
             },
 
             &Assm::LEA(rd, ref target) => {
-                let (section, label_addr) = addr_labels[target.clone()];
+                let (section, label_addr) = addr_labels[&target.clone()];
                 let label_addr = match section {
                     Section::CODE => label_addr,
                     Section::DATA => label_addr + base_data_addr
@@ -215,7 +217,7 @@ pub fn assemble(assm_lines: Vec<Assm>) -> AssmData<Mem> {
             },
 
             &Assm::LC(rd, ref target) => {
-                let label_value = value_labels[target.clone()];
+                let label_value = value_labels[&target.clone()];
                 let low = IMM9{value: label_value & 0x01FF};
                 let high = UIMM8{value: label_value as u16 >> 8};
                 memory[addr as usize] = Mem::CODE(InsnGen::CONST(rd, low));
