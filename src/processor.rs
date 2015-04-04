@@ -1,7 +1,7 @@
 use architecture::*;
 use assm_data::*;
 use controller::*;
-use core::error::FromError;
+use std::convert::From;
 use std::cmp::Ordering;
 
 pub struct CPU {
@@ -20,8 +20,8 @@ pub trait Simulate {
 #[derive(Debug)]
 pub enum CPUError { DecodeError(DecodeError), Unauthorized }
 
-impl FromError<DecodeError> for CPUError {
-  fn from_error(err: DecodeError) -> CPUError {
+impl From<DecodeError> for CPUError {
+  fn from(err: DecodeError) -> CPUError {
     CPUError::DecodeError(err)
   }
 }

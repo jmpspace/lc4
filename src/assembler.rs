@@ -1,4 +1,4 @@
-use core::error::FromError;
+use std::convert::From;
 use std::collections::HashMap;
 use std::old_io::{BufferedReader, File, IoError};
 
@@ -8,14 +8,14 @@ use assm_data::*;
 #[derive(Debug)]
 pub enum AssmError { IoError(IoError), ParseError(lc4_grammar::ParseError) }
 
-impl FromError<IoError> for AssmError {
-  fn from_error(err: IoError) -> AssmError {
+impl From<IoError> for AssmError {
+  fn from(err: IoError) -> AssmError {
     AssmError::IoError(err)
   }
 }
 
-impl FromError<lc4_grammar::ParseError> for AssmError {
-  fn from_error(err: lc4_grammar::ParseError) -> AssmError {
+impl From<lc4_grammar::ParseError> for AssmError {
+  fn from(err: lc4_grammar::ParseError) -> AssmError {
     AssmError::ParseError(err)
   }
 }
