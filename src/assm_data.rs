@@ -9,7 +9,7 @@ use encoder::*;
 
 pub type Label = String;
 
-#[derive(Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Section { CODE, DATA }
 
 #[derive(Clone, Copy, Debug)]

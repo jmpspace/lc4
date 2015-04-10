@@ -3,6 +3,7 @@
 extern crate core;
 extern crate lc4;
 
+use std::convert::AsRef;
 use std::env::args;
 use std::vec::Vec;
 
@@ -43,7 +44,7 @@ pub fn main() -> () {
 
   let mut out_file = source_file.clone(); out_file.push_str("obj");
 
-  match write_object_file(assm_data, out_file.as_slice()) {
+  match write_object_file(assm_data, out_file.as_ref()) {
     Err(err) => panic!("{:?}",err),
     Ok(()) => ()
   }

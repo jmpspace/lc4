@@ -1,10 +1,8 @@
-#![feature(core, old_io)]
-
 extern crate lc4;
 
 use std::cmp::*;
 use std::env::args;
-use std::old_io::*;
+use std::io::*;
 
 use lc4::assm_data::*;
 use lc4::processor::*;
@@ -38,7 +36,7 @@ pub fn main() -> () {
 
   print_proc(&cpu);
 
-  let mut stdin = stdin();
+  let stdin = stdin();
 
   for liner in stdin.lock().lines() {
     match liner {
