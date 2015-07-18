@@ -1,7 +1,7 @@
 [package]
 
 name = "lc4"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["John P Mayer <john.p.mayer.jr@gmail.com>"]
 
 [lib]
@@ -17,5 +17,8 @@ name = "lc4-debug"
 path = "src/bin/lc4-debug.rs"
 
 [dependencies]
-peg = "0.2.*"
+# peg = "0.3.*"
 byteorder = "0.3.*"
+
+[dependencies.peg]
+git = "https://github.com/kevinmehall/rust-peg"
